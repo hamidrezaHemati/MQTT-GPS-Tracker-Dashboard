@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Afra GPS-tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- Leaflet CSS and JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="left-panel">
+
+      <!-- Fixed Main Navbar -->
+      <ul class="ul0">
+        <li class="horizon"><a class="active" href="#" data-section="devices">Devices</a></li>
+        <li class="horizon"><a href="#" data-section="history">History</a></li>
+        <li class="horizon"><a href="#" data-section="geo">Geo-fencing</a></li>
+      </ul>
+
+      <!-- Dynamic Left Panel Content -->
+      <div id="left-content">
+
+        <!-- Devices Section -->
+        <div id="devices-section" class="section active">
+
+          <!-- Sub-navbar right aligned -->
+          <div class="sub-navbar">
+            <button id="add-device-btn">➕ Add Device</button>
+          </div>
+
+          <!-- Vertical Device List -->
+          <ul class="ul1" id="device-list">
+          </ul>
+
+          <!-- Device Info / Console -->
+          <div id="device-info">
+            <h3>Console (Last 50 Messages)</h3>
+            <div id="console" style="font-family: monospace; background: #ebe6e6; color: rgb(4, 116, 4); padding: 1em; height: 350px; overflow-y: auto;">
+              Select a device...
+            </div>
+          </div>
+        </div>
+
+        <!-- History Section -->
+        <div id="history-section" class="section">
+          <h3>History View</h3>
+          <p>Coming soon...</p>
+        </div>
+
+        <!-- Geo-fencing Section -->
+        <div id="geo-section" class="section">
+          <h3>Geo-fencing</h3>
+          <p>Coming soon...</p>
+        </div>
+
+        <script>
+          async function fetchData() {
+            try {
+              const response = await fetch('/data');
+              const data = await response.json();
+
+              const consoleDiv = document.getElementById("console");
+              consoleDiv.innerHTML = ""; // clear previous content
+
+              data.forEach(msg => {
+                const line = `[${msg.timestamp}] ${msg.topic} → ${msg.HH}:${msg.MM}:${msg.SS}, ${msg.lat}, ${msg.lon}, ${msg.Alt}, ${msg.Batt}, ${msg["Lock Status"]}, ${msg.Temprature}, ${msg.RSSI}, ${msg.Cnt}, ${msg.isQueued}`;
+                const p = document.createElement("div");
+                p.textContent = line;
+                consoleDiv.appendChild(p);
+              });
+            } catch (err) {
+              console.error("Error fetching data:", err);
+            }
+          }
+
+          setInterval(fetchData, 1000); // Fetch every 2 seconds
+          window.onload = fetchData;
+        </script>
+      </div>
+    </div>
+
+
+    <div class="right-panel">
+      <div id="map"></div>
+    </div>
+
+  </div>
+    <!-- Modal Form for Adding Device -->
+    <div id="device-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Add New Device</h3>
+        <form id="add-device-form">
+          <input type="text" id="new-IMEA" placeholder="IMEA" required><br>
+          <button type="submit">Add Device</button>
+        </form>
+      </div>
+  </div>
+
+  <script>
+    // Initial gpsPoint from Flask rendering:
+    let gpsPoint = {{ gps_point | tojson | safe }};
+
+    if (!gpsPoint) {
+      console.error("No GPS point available!");
+    }
+
+    const map = L.map('map').setView(gpsPoint || [0, 0], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+
+    let marker = null;
+
+    if (gpsPoint) {
+      marker = L.marker(gpsPoint).addTo(map)
+        .bindPopup('Most Recent Location')
+        .openPopup();
+    }
+
+    async function fetchLatestLocation() {
+        try {
+          const response = await fetch('/data');
+          const messages = await response.json();
+
+          if (messages.length === 0) return;
+
+          const latest = messages[0];
+          if (latest.lat && latest.lon) {
+            const newPoint = [latest.lat, latest.lon];
+
+            if (marker) {
+              marker.setLatLng(newPoint);
+              marker.getPopup().setContent(`Most Recent Location:<br>${new Date(latest.timestamp).toLocaleString()}`);
+            } else {
+              marker = L.marker(newPoint).addTo(map)
+                .bindPopup('Most Recent Location')
+                .openPopup();
+            }
+            map.setView(newPoint, 14);
+          }
+        } catch (err) {
+          console.error("Error fetching latest location:", err);
+        }
+      }
+
+      // Update location every 2 seconds
+      setInterval(fetchLatestLocation, 1000);
+
+      // Handle main navbar (ul0)
+      document.querySelectorAll(".ul0 a").forEach(link => {
+        link.addEventListener("click", e => {
+          e.preventDefault();
+          document.querySelectorAll(".ul0 a").forEach(a => a.classList.remove("active"));
+          link.classList.add("active");
+
+          const section = link.dataset.section;
+          document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+          document.getElementById(section + "-section").classList.add("active");
+        });
+      });
+
+      // Handle device list clicks
+      document.querySelectorAll("#device-list li").forEach(item => {
+        item.addEventListener("click", () => {
+          document.querySelectorAll("#device-list li").forEach(li => li.classList.remove("active"));
+          item.classList.add("active");
+          document.getElementById("console").innerHTML =
+            `<b>${item.textContent}</b> selected<br>Waiting for messages...`;
+        });
+      });
+
+      // Modal open/close
+      const modal = document.getElementById("device-modal");
+      document.getElementById("add-device-btn").onclick = () => modal.style.display = "block";
+      document.querySelector(".close").onclick = () => modal.style.display = "none";
+      window.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
+
+      // Handle add device form
+      document.getElementById("add-device-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const IMEA = document.getElementById("new-IMEA").value;
+
+      try {
+        // Send IMEA to Flask backend
+        const response = await fetch("/connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ IMEA: IMEA })
+        });
+
+        const result = await response.json();
+
+        if (result.status === "connected") {
+          // Create device card instead of plain li
+          const li = document.createElement("li");
+          li.className = "device-card"; // add card style
+          li.innerHTML = `
+            <div class="device-card-content">
+              <h4>🚛 ${IMEA}</h4>
+              <p>Status: ✅ Connected</p>
+            </div>
+          `;
+          li.dataset.device = IMEA;
+          document.getElementById("device-list").appendChild(li);
+
+          li.addEventListener("click", () => {
+            document.querySelectorAll("#device-list li").forEach(li => li.classList.remove("active"));
+            li.classList.add("active");
+            document.getElementById("console").innerHTML =
+              `<b>${IMEA}</b> selected<br>Waiting for messages...`;
+          });
+
+          alert("✅ Connected to device " + IMEA);
+          modal.style.display = "none";
+          document.getElementById("add-device-form").reset();
+        } else {
+          alert("❌ " + result.message);
+        }
+      } catch (err) {
+        console.error("Error connecting device:", err);
+        alert("⚠️ Failed to connect to server.");
+      }
+    });
+
+
+  </script>
+</body>
+</html>
+
