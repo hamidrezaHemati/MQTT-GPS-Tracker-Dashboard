@@ -174,5 +174,5 @@ def connect():
 
 
 if __name__ == "__main__":
-    # No MQTT thread here because connection is initiated on-demand from web
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
