@@ -53,8 +53,13 @@ def on_connect(c, userdata, flags, rc):
         connect_result["msg"] = f"Failed to connect, return code {rc}"
     connect_event.set()
 
+
+# store messages per device
+device_messages = {}
 def on_message(client, userdata, msg):
+    
     payload_str = msg.payload.decode().strip()
+    imea = msg.topic.split("/")[1] if len(msg.topic.split("/")) > 1 else "unknown"
     
     # Remove braces if present
     if payload_str.startswith("{") and payload_str.endswith("}"):
@@ -99,6 +104,9 @@ def on_message(client, userdata, msg):
         message["lon"] = lon
 
     message_history.appendleft(message)
+    if imea not in device_messages:
+        device_messages[imea] = deque(maxlen=10)
+    device_messages[imea].appendleft(message)
     
     print(f"📥 Logged MQTT message: {message}")
     
@@ -162,6 +170,7 @@ def login():
                 return redirect(url_for("login"))
             
             mqtt_server_ip = session.get("mqtt_server")
+            print("DEBUG1: ", mqtt_server_ip)
             return redirect(url_for("dashboard"))
         else:
             return render_template("login.html", error="Invalid username or password")
@@ -178,11 +187,13 @@ def dashboard():
     return render_template("index.html", gps_point=gps_point)
 
 
-@app.route('/data')
-def data():
-    response = make_response(jsonify(list(message_history)))
+@app.route('/data/<imea>')
+def data_for_device(imea):
+    msgs = list(device_messages.get(imea, []))
+    response = make_response(jsonify(msgs))
     response.headers['Cache-Control'] = 'no-store'
     return response
+
 
 
 @app.route('/connect', methods=['POST'])
@@ -194,7 +205,8 @@ def connect():
         return jsonify({"status": "error", "message": "Your device IMEA code is required"}), 400
     
     topic = f'truck/{IMEA}/status'
-    success, msg = start_mqtt(mqtt_server_ip, mqtt_server_port, topic)
+    print("DEBUG2: ", session.get("mqtt_server"))
+    success, msg = start_mqtt(session.get("mqtt_server"), mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 
