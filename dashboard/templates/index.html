@@ -86,16 +86,43 @@
     // Initial gpsPoint from Flask
     let map;
     let deviceMarkers = {};
+    let deviceColors = {};  // to store IMEI → color mapping
+
+    // Available colors
+    const availableColors = [
+      "red", "blue", "green", "orange", "yellow",
+      "violet", "grey", "black"
+    ];
 
     function initMap() {
-      map = L.map('map').setView([35.7, 51.4], 12);
+      map = L.map('map').setView([35.7, 51.4], 20);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 25,
       }).addTo(map);
     }
 
-    // update marker for one device
+    // Create a standard pin icon with custom color
+    function getPinIcon(color) {
+      return L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize: [25, 41],   // size of the icon
+        iconAnchor: [12, 41], // point of the icon which corresponds to marker location
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+    }
+
+    // Assign a consistent color per IMEI
+    function getDeviceColor(imei) {
+      if (!deviceColors[imei]) {
+        const colorIndex = Object.keys(deviceColors).length % availableColors.length;
+        deviceColors[imei] = availableColors[colorIndex];
+      }
+      return deviceColors[imei];
+    }
+
     async function updateDeviceLocation(imei) {
       try {
         const res = await fetch(`/device_location/${imei}`);
@@ -103,10 +130,15 @@
 
         if (data.success) {
           const pos = [data.lat, data.lon];
+          const color = getDeviceColor(imei);
 
           if (!deviceMarkers[imei]) {
-            deviceMarkers[imei] = L.marker(pos).addTo(map).bindPopup(`🚛 ${imei}`);
+            // first time: create marker with unique color
+            deviceMarkers[imei] = L.marker(pos, { icon: getPinIcon(color) })
+              .addTo(map)
+              .bindPopup(`🚛 ${imei}`);
           } else {
+            // update position
             deviceMarkers[imei].setLatLng(pos);
           }
         }
@@ -119,7 +151,7 @@
     function startUpdatingLocations(IMEI) {
       setInterval(() => {
         updateDeviceLocation(IMEI);
-      }, 2000); // every 2s
+      }, 1000); // every 2s
     }
 
     document.addEventListener("DOMContentLoaded", () => {
