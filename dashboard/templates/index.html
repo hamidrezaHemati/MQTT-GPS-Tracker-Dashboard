@@ -37,12 +37,28 @@
           <div class="sub-navbar">
             <button id="back-to-devices">⬅️ Back</button>
           </div>
-          <!-- <h3 id="device-title"></h3> -->
 
           <div class="device-card">
             <div class="device-card-content">
               <h4 id="device-title"></h4>
               <p>Status: ✅ Connected</p>
+            </div>
+          </div>
+
+          <div class="status-card">
+            <div class="status-card-content">
+              <div id="device-params" class="params-grid">
+                <div><span>⏰</span> <b id="param-time">--:--:--</b></div>
+                <div><span>📍</span> Lat: <b id="param-lat">--</b></div>
+                <div><span>📍</span> Lon: <b id="param-lon">--</b></div>
+                <div><span>📏</span> Alt: <b id="param-alt">--</b> m</div>
+                <div><span>🔋</span> Battery: <b id="param-batt">--</b>%</div>
+                <div><span>🔒</span> Lock: <b id="param-lock">--</b></div>
+                <div><span>🌡️</span> Temp: <b id="param-temp">--</b> °C</div>
+                <div><span>📶</span> RSSI: <b id="param-rssi">--</b></div>
+                <div><span>🔢</span> Msg Cnt: <b id="param-cnt">--</b></div>
+                <div><span>📦</span> Queued: <b id="param-queued">--</b></div>
+              </div>
             </div>
           </div>
 
@@ -197,6 +213,24 @@
           const consoleDiv = document.getElementById("device-console");
           consoleDiv.innerHTML = "";
 
+          if (data.length > 0) {
+            // take the latest message
+            const latest = data[0];  
+
+            // update status card fields
+            document.getElementById("param-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+            document.getElementById("param-lat").textContent = latest.lat;
+            document.getElementById("param-lon").textContent = latest.lon;
+            document.getElementById("param-alt").textContent = latest.Alt;
+            document.getElementById("param-batt").textContent = latest.Batt;
+            document.getElementById("param-lock").textContent = latest["Lock Status"];
+            document.getElementById("param-temp").textContent = latest.Temprature;
+            document.getElementById("param-rssi").textContent = latest.RSSI;
+            document.getElementById("param-cnt").textContent = latest.Cnt;
+            document.getElementById("param-queued").textContent = latest.isQueued;
+          }
+
+          // still print all messages in console
           data.forEach(msg => {
             const line = `[${msg.timestamp}] ${msg.topic} → ${msg.HH}:${msg.MM}:${msg.SS}, ${msg.lat}, ${msg.lon}, ${msg.Alt}, ${msg.Batt}, ${msg["Lock Status"]}, ${msg.Temprature}, ${msg.RSSI}, ${msg.Cnt}, ${msg.isQueued}`;
             const p = document.createElement("div");
@@ -207,6 +241,7 @@
           console.error("Error fetching device data:", err);
         }
       }
+
 
       fetchDeviceData();
       consoleInterval = setInterval(fetchDeviceData, 2000);
