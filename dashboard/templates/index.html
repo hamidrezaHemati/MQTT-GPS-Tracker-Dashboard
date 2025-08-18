@@ -76,7 +76,7 @@
       <span class="close">&times;</span>
       <h3>Add New Device</h3>
       <form id="add-device-form">
-        <input type="text" id="new-IMEA" placeholder="IMEA" required><br>
+        <input type="text" id="new-IMEI" placeholder="IMEI" required><br>
         <button type="submit">Add Device</button>
       </form>
     </div>
@@ -120,12 +120,12 @@
 
     // Device console
     let consoleInterval = null;
-    function startDeviceConsole(IMEA) {
+    function startDeviceConsole(IMEI) {
       if (consoleInterval) clearInterval(consoleInterval);
 
       async function fetchDeviceData() {
         try {
-          const response = await fetch(`/data/${IMEA}`);
+          const response = await fetch(`/data/${IMEI}`);
           const data = await response.json();
 
           const consoleDiv = document.getElementById("device-console");
@@ -174,13 +174,13 @@
     // Add device form
     document.getElementById("add-device-form").addEventListener("submit", async e => {
       e.preventDefault();
-      const IMEA = document.getElementById("new-IMEA").value;
+      const IMEI = document.getElementById("new-IMEI").value;
 
       try {
         const response = await fetch("/connect", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ IMEA: IMEA })
+          body: JSON.stringify({ IMEI: IMEI })
         });
         const result = await response.json();
 
@@ -189,11 +189,11 @@
           li.className = "device-card";
           li.innerHTML = `
             <div class="device-card-content">
-              <h4>🚛 ${IMEA}</h4>
+              <h4>🚛 ${IMEI}</h4>
               <p>Status: ✅ Connected</p>
             </div>
           `;
-          li.dataset.device = IMEA;
+          li.dataset.device = IMEI;
           document.getElementById("device-list").appendChild(li);
 
 
@@ -204,14 +204,14 @@
             document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
             document.getElementById("device-page").classList.add("active");
 
-            document.getElementById("device-title").textContent = `🚛 ${IMEA}`;
+            document.getElementById("device-title").textContent = `🚛 ${IMEI}`;
             document.getElementById("device-console").innerHTML =
-              `<b>${IMEA}</b> selected<br>Waiting for messages...`;
+              `<b>${IMEI}</b> selected<br>Waiting for messages...`;
 
-            startDeviceConsole(IMEA);
+            startDeviceConsole(IMEI);
           });
 
-          alert("✅ Connected to device " + IMEA);
+          alert("✅ Connected to device " + IMEI);
           modal.style.display = "none";
           document.getElementById("add-device-form").reset();
         } else {

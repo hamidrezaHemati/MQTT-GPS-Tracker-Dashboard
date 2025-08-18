@@ -23,13 +23,11 @@ app.secret_key = "supersecretkey"  # needed for session management
 
 # Get absolute path to the folder this script is in
 script_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(script_dir, "mqtt_messages.csv")
 
-# === Ensure CSV has a header row ===
-if not os.path.exists(csv_path):
-    with open(csv_path, mode="w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["HH", "MM", "SS", "lat", "lon", "Alt", "Batt","Lock","Temp","RSSI","Cnt","Queued"])
+# store messages per device
+device_messages = {}
+devices_csv_path = {} # IMEI:CSV_Path
+added_devices = []
 
 message_history = deque(maxlen=50)
 
@@ -41,10 +39,21 @@ current_config = {"ip": None, "port": None, "topic": None}
 connect_event = threading.Event()
 connect_result = {"success": False, "msg": ""}
 
+def create_csv_log(csv_path):
+    # === Ensure CSV has a header row ===
+    if not os.path.exists(csv_path):
+        with open(csv_path, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Topic", "HH", "MM", "SS", "lat", "lon", "Alt", "Batt","Lock","Temp","RSSI","Cnt","Queued"])
+
+
 def on_connect(c, userdata, flags, rc):
     if rc == 0:
         print("✅ Connected to MQTT Broker!")
-        c.subscribe(current_config["topic"])
+        for imei in added_devices:
+            topic = f"truck/{imei}/status"
+            c.subscribe(topic)
+            print(f"📡 Subscribed to {topic}")
         connect_result["success"] = True
         connect_result["msg"] = "Connected successfully"
     else:
@@ -54,8 +63,6 @@ def on_connect(c, userdata, flags, rc):
     connect_event.set()
 
 
-# store messages per device
-device_messages = {}
 def on_message(client, userdata, msg):
     
     payload_str = msg.payload.decode().strip()
@@ -104,56 +111,50 @@ def on_message(client, userdata, msg):
         message["lon"] = lon
 
     message_history.appendleft(message)
-    if IMEI not in device_messages:
+    if IMEI not in devices_csv_path:
+        added_devices.append(IMEI)
+        devices_csv_path[IMEI] = os.path.join(script_dir, IMEI + "_history.csv")
         device_messages[IMEI] = deque(maxlen=10)
+        create_csv_log(IMEI)
     device_messages[IMEI].appendleft(message)
-    
-    print(f"📥 Logged MQTT message: {message}")
-    
+    print(f"DEBUG device: IMEA {IMEI}")
+    print(f"DEBUG device: added_devices {added_devices}")
+
     # Append to CSV
-    with open(csv_path, mode="a", newline="") as file:
+    with open(devices_csv_path[IMEI], mode="a", newline="") as file:
         writer = csv.writer(file)
         writer.writerow([
-            HH, MM, SS, lat, lon, Alt, Batt, Lock, Temp, RSSI, Cnt, Queued
+            msg.topic, HH, MM, SS, lat, lon, Alt, Batt, Lock, Temp, RSSI, Cnt, Queued
         ])
 
     
 def start_mqtt(ip, port, topic):
     global client, current_config, connect_event, connect_result
 
-    if client:
+    if client is None:
+        client = mqtt.Client(CLIENT_ID)
+        client.on_connect = on_connect
+        client.on_message = on_message
+
+        current_config = {"ip": ip, "port": port, "topic": topic}
+
+        connect_event.clear()
+        connect_result = {"success": False, "msg": ""}
+
         try:
-            client.loop_stop()
-            client.disconnect()
+            client.connect(ip, int(port), 60)
+            client.loop_start()
         except Exception as e:
-            print(f"❌ Error stopping old client: {e}")
+            print(f"❌ MQTT connection error: {e}")
+            return False, f"Connection error: {e}"
 
-    client = mqtt.Client(CLIENT_ID)
-    client.on_connect = on_connect
-    client.on_message = on_message
+        connected = connect_event.wait(timeout=5)
 
-    current_config = {"ip": ip, "port": port, "topic": topic}
+        if not connected:
+            return False, "Connection timed out"
 
-    # Reset the event and connection result before connect attempt
-    connect_event.clear()
-    connect_result = {"success": False, "msg": ""}
-
-    try:
-        client.connect(ip, int(port), 60)
-        client.loop_start()
-    except Exception as e:
-        print(f"❌ MQTT connection error: {e}")
-        return False, f"Connection error: {e}"
-
-    # Wait for on_connect callback (max 5 seconds)
-    connected = connect_event.wait(timeout=5)
-
-    if not connected:
-        # Timeout waiting for connection
-        return False, "Connection timed out"
-
-    return connect_result["success"], connect_result["msg"]
-
+    client.subscribe(topic)
+    return True, f"Subscribed to {topic}"
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -170,7 +171,6 @@ def login():
                 return redirect(url_for("login"))
             
             mqtt_server_ip = session.get("mqtt_server")
-            print("DEBUG1: ", mqtt_server_ip)
             return redirect(url_for("dashboard"))
         else:
             return render_template("login.html", error="Invalid username or password")
@@ -205,7 +205,6 @@ def connect():
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
     topic = f'truck/{IMEI}/status'
-    print("DEBUG2: ", session.get("mqtt_server"))
     success, msg = start_mqtt(session.get("mqtt_server"), mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
