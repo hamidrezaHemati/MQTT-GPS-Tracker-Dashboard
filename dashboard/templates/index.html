@@ -84,39 +84,47 @@
 
   <script>
     // Initial gpsPoint from Flask
-    let gpsPoint = {{ gps_point | tojson | safe }};
-    const map = L.map('map').setView(gpsPoint || [0, 0], 14);
+    let map;
+    let deviceMarkers = {};
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    function initMap() {
+      map = L.map('map').setView([35.7, 51.4], 12);
 
-    let marker = null;
-    if (gpsPoint) {
-      marker = L.marker(gpsPoint).addTo(map).bindPopup('Most Recent Location').openPopup();
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 25,
+      }).addTo(map);
     }
 
-    // Update latest GPS location
-    async function fetchLatestLocation() {
+    // update marker for one device
+    async function updateDeviceLocation(imei) {
       try {
-        const response = await fetch('/data');
-        const messages = await response.json();
-        if (messages.length === 0) return;
+        const res = await fetch(`/device_location/${imei}`);
+        const data = await res.json();
 
-        const latest = messages[0];
-        if (latest.lat && latest.lon) {
-          const newPoint = [latest.lat, latest.lon];
-          if (marker) {
-            marker.setLatLng(newPoint);
-            marker.getPopup().setContent(`Most Recent Location:<br>${new Date(latest.timestamp).toLocaleString()}`);
+        if (data.success) {
+          const pos = [data.lat, data.lon];
+
+          if (!deviceMarkers[imei]) {
+            deviceMarkers[imei] = L.marker(pos).addTo(map).bindPopup(`🚛 ${imei}`);
           } else {
-            marker = L.marker(newPoint).addTo(map).bindPopup('Most Recent Location').openPopup();
+            deviceMarkers[imei].setLatLng(pos);
           }
-          map.setView(newPoint, 14);
         }
       } catch (err) {
-        console.error("Error fetching latest location:", err);
+        console.error("Error updating location:", err);
       }
     }
-    setInterval(fetchLatestLocation, 2000);
+
+    // continuously update ALL active devices
+    function startUpdatingLocations(IMEI) {
+      setInterval(() => {
+        updateDeviceLocation(IMEI);
+      }, 2000); // every 2s
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+    });
 
     // Device console
     let consoleInterval = null;
@@ -209,6 +217,7 @@
               `<b>${IMEI}</b> selected<br>Waiting for messages...`;
 
             startDeviceConsole(IMEI);
+            startUpdatingLocations(IMEI);
           });
 
           alert("✅ Connected to device " + IMEI);

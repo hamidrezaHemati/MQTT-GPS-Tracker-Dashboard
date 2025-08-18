@@ -28,8 +28,9 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 device_messages = {}
 devices_csv_path = {} # IMEI:CSV_Path
 added_devices = []
+device_locations = {}  # global dict: {imei: {"lat": .., "lon": ..}}
 
-message_history = deque(maxlen=50)
+message_history = deque(maxlen=10)
 
 # Globals for MQTT client and current config
 client = None
@@ -44,7 +45,7 @@ def create_csv_log(csv_path):
     if not os.path.exists(csv_path):
         with open(csv_path, mode="w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(["Topic", "HH", "MM", "SS", "lat", "lon", "Alt", "Batt","Lock","Temp","RSSI","Cnt","Queued"])
+            writer.writerow(["Topic", "Hour", "Minute", "Seccond", "lat", "lon", "Alt", "Battery Level","Lock Status","Temperature","RSSI","MSG Counter","Is MSG Queued"])
 
 
 def on_connect(c, userdata, flags, rc):
@@ -81,14 +82,6 @@ def on_message(client, userdata, msg):
     Batt, Lock, Temp = parts[6], parts[7], parts[8]
     RSSI, Cnt, Queued = parts[9], parts[10], parts[11]
 
-    try:
-        payload_json = json.loads(payload_str)
-        if isinstance(payload_json, dict):
-            lat = payload_json.get("lat")
-            lon = payload_json.get("lon")
-    except json.JSONDecodeError:
-        pass  # payload is not JSON; lat/lon remain None
-
     # Store for webpage log
     message = {
         "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -106,16 +99,21 @@ def on_message(client, userdata, msg):
         "Cnt": int(Cnt),
         "isQueued": int(Queued)
     }
-    if lat is not None and lon is not None:
-        message["lat"] = lat
-        message["lon"] = lon
 
     message_history.appendleft(message)
     if IMEI not in devices_csv_path:
         added_devices.append(IMEI)
         devices_csv_path[IMEI] = os.path.join(script_dir, IMEI + "_history.csv")
         device_messages[IMEI] = deque(maxlen=10)
-        create_csv_log(IMEI)
+        create_csv_log(devices_csv_path[IMEI])
+        device_locations[IMEI] = deque(maxlen=5)
+
+    try:
+        if "lat" in message and "lon" in message:
+            device_locations[IMEI].appendleft({"lat": message["lat"], "lon": message["lon"]})
+    except Exception as e:
+        print(f"⚠️ Could not parse GPS from {payload_str}: {e}")
+    
     device_messages[IMEI].appendleft(message)
     print(f"DEBUG device: IMEA {IMEI}")
     print(f"DEBUG device: added_devices {added_devices}")
@@ -186,7 +184,6 @@ def dashboard():
             gps_point = [current_msg['lat'], current_msg['lon']]
     return render_template("index.html", gps_point=gps_point)
 
-
 @app.route('/data/<IMEI>')
 def data_for_device(IMEI):
     msgs = list(device_messages.get(IMEI, []))
@@ -194,7 +191,16 @@ def data_for_device(IMEI):
     response.headers['Cache-Control'] = 'no-store'
     return response
 
-
+@app.route("/device_location/<IMEI>")
+def device_location(IMEI):
+    if IMEI in device_locations and len(device_locations[IMEI]) > 0:
+        latest = device_locations[IMEI][0]  # most recent location
+        return jsonify({
+            "success": True,
+            "lat": latest["lat"],
+            "lon": latest["lon"]
+        })
+    return jsonify({"success": False, "msg": "No location yet"})
 
 @app.route('/connect', methods=['POST'])
 def connect():
