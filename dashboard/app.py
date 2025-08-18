@@ -11,7 +11,7 @@ import json
 
 app = Flask(__name__, static_folder='static')
 
-mqtt_server_ip = '89.219.105.47'
+mqtt_server_ip = '91.185.153.192'
 mqtt_server_port = 1883
 
 # Get absolute path to the folder this script is in

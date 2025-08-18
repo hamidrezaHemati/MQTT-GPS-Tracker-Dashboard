@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Afra GPS-tracker login page</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <style>
+            
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #191414 0%, #1DB954 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            
+            form {border: 3px solid #f1f1f1;}
+
+            input[type=text], input[type=password] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            }
+
+            button {
+            background-color: #04AA6D;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            align-content: center;
+            }
+
+            button:hover {
+            opacity: 0.8;
+            }
+
+
+            .imgcontainer {
+            text-align: center;
+            margin: 12px 0 6px 0;
+            }
+
+            img.avatar {
+            width: 30%;
+            border-radius: 30%;
+            }
+
+            .container {
+            padding: 16px;
+            }
+
+            span.psw {
+            float: right;
+            padding-top: 16px;
+            }
+
+            .center {
+            margin: auto;
+            width: 50%;
+            padding: 40px;
+            }
+
+            /* Change styles for span and cancel button on extra small screens */
+            @media screen and (max-width: 300px) {
+            span.psw {
+                display: block;
+                float: none;
+            }
+            .cancelbtn {
+                width: 100%;
+            }
+            .center {
+            margin: auto;
+            width: 70%;
+            padding: 20px;
+            }
+            }
+        </style>
+    </head>
+<body>
+    <div class="center">
+        <form method="post">
+        <div class="imgcontainer">
+            <img src="logo.webp" alt="Avatar" class="avatar">
+        </div>
+
+        <div class="container">
+            
+            <input type="text" placeholder="Username" name="uname" required>
+
+            <input type="password" placeholder="Password" name="psw" required>
+
+            <input type="text" placeholder="MQTT Server Address" name="mqtt_server" required><br><br>
+                
+            <button type="submit">Login</button>
+        </div>
+
+        </form>
+    </div>
+</body>
+</html>
+
