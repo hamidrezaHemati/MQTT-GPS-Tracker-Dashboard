@@ -35,9 +35,17 @@
         <!-- Device Page -->
         <div id="device-page" class="section">
           <div class="sub-navbar">
-            <button id="back-to-devices">⬅️ Back to Devices</button>
+            <button id="back-to-devices">⬅️ Back</button>
           </div>
-          <h3 id="device-title"></h3>
+          <!-- <h3 id="device-title"></h3> -->
+
+          <div class="device-card">
+            <div class="device-card-content">
+              <h4 id="device-title"></h4>
+              <p>Status: ✅ Connected</p>
+            </div>
+          </div>
+
           <div id="device-console" style="font-family: monospace; background: #ebe6e6; color: rgb(4, 116, 4); padding: 1em; height: 350px; overflow-y: auto;">
             Waiting for messages...
           </div>
@@ -188,6 +196,7 @@
           li.dataset.device = IMEA;
           document.getElementById("device-list").appendChild(li);
 
+
           li.addEventListener("click", () => {
             document.querySelectorAll("#device-list li").forEach(li => li.classList.remove("active"));
             li.classList.add("active");
@@ -195,7 +204,7 @@
             document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
             document.getElementById("device-page").classList.add("active");
 
-            document.getElementById("device-title").textContent = `Device ${IMEA}`;
+            document.getElementById("device-title").textContent = `🚛 ${IMEA}`;
             document.getElementById("device-console").innerHTML =
               `<b>${IMEA}</b> selected<br>Waiting for messages...`;
 

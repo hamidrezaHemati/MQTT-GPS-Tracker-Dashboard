@@ -59,7 +59,7 @@ device_messages = {}
 def on_message(client, userdata, msg):
     
     payload_str = msg.payload.decode().strip()
-    imea = msg.topic.split("/")[1] if len(msg.topic.split("/")) > 1 else "unknown"
+    IMEI = msg.topic.split("/")[1] if len(msg.topic.split("/")) > 1 else "unknown"
     
     # Remove braces if present
     if payload_str.startswith("{") and payload_str.endswith("}"):
@@ -104,9 +104,9 @@ def on_message(client, userdata, msg):
         message["lon"] = lon
 
     message_history.appendleft(message)
-    if imea not in device_messages:
-        device_messages[imea] = deque(maxlen=10)
-    device_messages[imea].appendleft(message)
+    if IMEI not in device_messages:
+        device_messages[IMEI] = deque(maxlen=10)
+    device_messages[IMEI].appendleft(message)
     
     print(f"📥 Logged MQTT message: {message}")
     
@@ -187,9 +187,9 @@ def dashboard():
     return render_template("index.html", gps_point=gps_point)
 
 
-@app.route('/data/<imea>')
-def data_for_device(imea):
-    msgs = list(device_messages.get(imea, []))
+@app.route('/data/<IMEI>')
+def data_for_device(IMEI):
+    msgs = list(device_messages.get(IMEI, []))
     response = make_response(jsonify(msgs))
     response.headers['Cache-Control'] = 'no-store'
     return response
@@ -199,12 +199,12 @@ def data_for_device(imea):
 @app.route('/connect', methods=['POST'])
 def connect():
     data = request.get_json()
-    IMEA = data.get("IMEA")
+    IMEI = data.get("IMEI")
 
-    if not (IMEA):
-        return jsonify({"status": "error", "message": "Your device IMEA code is required"}), 400
+    if not (IMEI):
+        return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
-    topic = f'truck/{IMEA}/status'
+    topic = f'truck/{IMEI}/status'
     print("DEBUG2: ", session.get("mqtt_server"))
     success, msg = start_mqtt(session.get("mqtt_server"), mqtt_server_port, topic)
     status = "connected" if success else "error"
