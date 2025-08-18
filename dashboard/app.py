@@ -11,8 +11,15 @@ import json
 
 app = Flask(__name__, static_folder='static')
 
-mqtt_server_ip = '91.185.153.192'
+# === MQTT session ===
+mqtt_server_ip = ''
 mqtt_server_port = 1883
+CLIENT_ID = "dashboard_mqtt_hub"
+
+# === Hardcoded credentials ===
+USERNAME = "admin"
+PASSWORD = "admin"
+app.secret_key = "supersecretkey"  # needed for session management
 
 # Get absolute path to the folder this script is in
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,8 +32,6 @@ if not os.path.exists(csv_path):
         writer.writerow(["HH", "MM", "SS", "lat", "lon", "Alt", "Batt","Lock","Temp","RSSI","Cnt","Queued"])
 
 message_history = deque(maxlen=50)
-
-CLIENT_ID = "dashboard_mqtt_hub"
 
 # Globals for MQTT client and current config
 client = None
@@ -142,8 +147,29 @@ def start_mqtt(ip, port, topic):
     return connect_result["success"], connect_result["msg"]
 
 
-@app.route('/')
-def index():
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        mqtt_server = request.form["mqtt_server"]
+
+        if username == USERNAME and password == PASSWORD:
+            # Store in session
+            session["logged_in"] = True
+            session["mqtt_server"] = mqtt_server
+            if not session.get("logged_in"):
+                return redirect(url_for("login"))
+            
+            mqtt_server_ip = session.get("mqtt_server")
+            return redirect(url_for("dashboard"))
+        else:
+            return render_template("login.html", error="Invalid username or password")
+
+    return render_template("login.html")
+
+@app.route("/dashboard")
+def dashboard():
     gps_point = [35.776215087404076, 51.47687022102022]
     if message_history:
         current_msg = message_history[0]
