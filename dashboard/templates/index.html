@@ -120,6 +120,37 @@
             </div>
           </div>
 
+          <div class="alarm-cards">
+            
+            <div class="alarm-card">
+              <img src="{{ url_for('static', filename='icons/rfid.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">RFID Serial number:</span>
+                <span id="param-todo" class="alarm-value">--</span>
+                <span class="param-label">Attempted Time:</span>
+                <span id="param-time" class="alarm-value">--:--:--</span>
+              </div>
+            </div>
+
+            <div class="alarm-card">
+              <img src="{{ url_for('static', filename='icons/zone.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <div class="param-row">
+                  <span class="param-label">Zone Name:</span>
+                  <span id="param-zone" class="alarm-value">Not Specified</span>
+                </div>
+                <div class="param-row">
+                  <span class="param-label">Zone notification:</span>
+                  <span id="param-notif" class="alarm-value">--</span>
+                </div>
+                <div class="param-row">
+                  <span class="param-label">Attempted Time:</span>
+                  <span id="param-time" class="alarm-value">--:--:--</span>
+    </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
           <!-- <div id="device-console" style="font-family: monospace; background: #ebe6e6; color: rgb(4, 116, 4); padding: 1em; height: 350px; overflow-y: auto;">
