@@ -53,6 +53,7 @@ def on_connect(c, userdata, flags, rc):
         for imei in added_devices:
             topic = f"truck/{imei}/status"
             c.subscribe(topic)
+            print(f"🔔 DEBUG: Subscribed to {userdata['topic']}")
             print(f"📡 Subscribed to {topic}")
         connect_result["success"] = True
         connect_result["msg"] = "Connected successfully"
@@ -64,6 +65,7 @@ def on_connect(c, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
+    print(f"📩 DEBUG: Received on {msg.topic}: {msg.payload.decode()}")
     
     payload_str = msg.payload.decode().strip()
     IMEI = msg.topic.split("/")[1] if len(msg.topic.split("/")) > 1 else "unknown"
@@ -78,8 +80,6 @@ def on_message(client, userdata, msg):
 
     # Split into list by comma
     parts = [p.strip() for p in payload_str.split(",")]
-
-    print("DEBUG: time", parts[0], parts[1], parts[2])
 
     # Map to named variables
     HH, MM, SS = parts[0], parts[1], parts[2]
@@ -152,6 +152,8 @@ def start_mqtt(ip, port, topic):
 
         current_config = {"ip": ip, "port": port, "topic": topic}
 
+        print("Kir: ", current_config)
+
         connect_event.clear()
         connect_result = {"success": False, "msg": ""}
 
@@ -219,12 +221,14 @@ def connect():
     data = request.get_json()
     IMEI = data.get("IMEI")
 
+    print("Kir IMEI: ", IMEI)
+
     if not (IMEI):
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
     topic = f'truck/{IMEI}/status'
     # success, msg = start_mqtt('localhost', mqtt_server_port, topic)
-    success, msg = start_mqtt('89.219.208.162', mqtt_server_port, topic)
+    success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 
