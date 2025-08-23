@@ -12,7 +12,6 @@ import json
 app = Flask(__name__, static_folder='static')
 
 # === MQTT session ===
-mqtt_server_ip = ''
 mqtt_server_port = 1883
 CLIENT_ID = "dashboard_mqtt_hub"
 
@@ -159,16 +158,12 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        mqtt_server = request.form["mqtt_server"]
 
         if username == USERNAME and password == PASSWORD:
             # Store in session
             session["logged_in"] = True
-            session["mqtt_server"] = mqtt_server
             if not session.get("logged_in"):
                 return redirect(url_for("login"))
-            
-            mqtt_server_ip = session.get("mqtt_server")
             return redirect(url_for("dashboard"))
         else:
             return render_template("login.html", error="Invalid username or password")
@@ -211,7 +206,7 @@ def connect():
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
     topic = f'truck/{IMEI}/status'
-    success, msg = start_mqtt(session.get("mqtt_server"), mqtt_server_port, topic)
+    success, msg = start_mqtt('localhost', mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 

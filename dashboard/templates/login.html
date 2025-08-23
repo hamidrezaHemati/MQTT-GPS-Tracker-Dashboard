@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Music Login</title>
+    <title>Lock Pack Login</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/webp" href="{{ url_for('static', filename='logo.webp') }}">>
     <style>
         /* Minimal Music Login Form - Complete & Self-Contained */
 
@@ -430,11 +432,11 @@
                     <span class="error-message" id="passwordError"></span>
                 </div>
 
-                <div class="form-group">
+                <!-- <div class="form-group">
                     <label for="mqtt_server">MQTT Server</label>
                     <input type="mqtt_server" id="mqtt_server" name="mqtt_server" required autocomplete="192.168.1.1">
                     <span class="error-message" id="MQTTAdressError"></span>
-                </div>
+                </div> -->
 
                 <button type="submit" class="login-btn">
                     <span class="btn-text">Login</span>
