@@ -91,7 +91,7 @@
               <img src="{{ url_for('static', filename='icons/temp.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Temperature</span>
-                <span id="param-temp" class="param-value">--°C</span>
+                <span id="param-temp" class="param-value">-- °C</span>
               </div>
             </div>
 
@@ -281,9 +281,9 @@
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
             // document.getElementById("param-alt").textContent = latest.Alt; // only if you add it to HTML
-            document.getElementById("param-batt").textContent = latest.Batt;
+            document.getElementById("param-batt").textContent = latest.Batt + "%";
             document.getElementById("param-lock").textContent = latest["Lock Status"];
-            document.getElementById("param-temp").textContent = latest.Temperature;
+            document.getElementById("param-temp").textContent = latest.Temperature + " °C";
             document.getElementById("param-rssi").textContent = latest.RSSI;
             document.getElementById("param-cnt").textContent = latest.Cnt;
             document.getElementById("param-queued").textContent = latest.isQueued;

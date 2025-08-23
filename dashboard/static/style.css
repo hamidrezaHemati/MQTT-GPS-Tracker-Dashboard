@@ -7,14 +7,14 @@ body {
   height: 100vh;
 }
 .left-panel {
-  width: 40%;
+  width: 30%;
   padding: 1px;
   box-sizing: border-box;
   background-color: #faf7f7;
   border-right: 1px solid #ccc;
 }
 .right-panel {
-  width: 60%;
+  width: 70%;
   height: 100%;
 }
 
@@ -83,7 +83,7 @@ ul {
 
 .horizon {
   float: left;
-  border-right:1px solid #bbb;
+  border-right:1px solid #ffffff;
 }
 
 .vertical {
@@ -294,6 +294,7 @@ li a:hover:not(.active) {
 .bottom-cards {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .normal-card {
@@ -302,7 +303,7 @@ li a:hover:not(.active) {
   padding: 10px;
   border-radius: 12px;
   display: flex;
-  align-items: left;
+  align-items: center;
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;

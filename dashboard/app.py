@@ -87,7 +87,15 @@ def on_message(client, userdata, msg):
     Batt, Lock, Temp = parts[6], parts[7], parts[8]
     RSSI, Cnt, Queued = parts[9], parts[10], parts[11]
 
+    if Lock == 'L': Lock = 'Locked'
+    elif Lock == 'U': Lock = 'Unlocked'
+    else: Lock = 'Undifiend Lock Msg'
 
+    Batt = int(Batt)
+    if Batt == 10:
+        Batt = f'100'
+    else:
+        Batt = f'{Batt*10} ~ {(Batt+1)*10}'
 
     # Store for webpage log
     message = {
@@ -99,7 +107,7 @@ def on_message(client, userdata, msg):
         "lat": float(lat),
         "lon": float(lon),
         "Alt": float(Alt),
-        "Batt": int(Batt),
+        "Batt": Batt,
         "Lock Status": Lock,
         "Temperature": float(Temp),
         "RSSI": int(RSSI),
@@ -216,7 +224,7 @@ def connect():
     
     topic = f'truck/{IMEI}/status'
     # success, msg = start_mqtt('localhost', mqtt_server_port, topic)
-    success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
+    success, msg = start_mqtt('89.219.208.162', mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 
