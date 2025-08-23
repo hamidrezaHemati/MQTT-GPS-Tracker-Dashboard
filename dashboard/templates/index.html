@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- Favicon -->
-  <link rel="icon" type="image/webp" href="{{ url_for('static', filename='logo.webp') }}">
+  <link rel="icon" type="image/svg" href="{{ url_for('static', filename='logo-02.svg') }}">
   <!-- Leaflet CSS and JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -146,7 +146,25 @@
                 <div class="param-row">
                   <span class="param-label">Attempted Time:</span>
                   <span id="param-time" class="alarm-value">--:--:--</span>
-    </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="command-cards">
+              <div class="command-card" id="lock-command-btn">
+                <img src="{{ url_for('static', filename='icons/lock.png') }}" class="highlighted-icon">
+                <div class="param-info">
+                  <span class="param-label">Lock Command</span>
+                  <button onclick="openLockModal()">Send</button>
+                </div>
+              </div>
+
+              <div class="command-card" id="config-command-btn">
+                <img src="{{ url_for('static', filename='icons/clock.png') }}" class="highlighted-icon">
+                <div class="param-info">
+                  <span class="param-label">Config Wait</span>
+                  <button onclick="openConfigModal()">Send</button>
+                </div>
               </div>
             </div>
           </div>
@@ -188,6 +206,34 @@
       </form>
     </div>
   </div>
+  <!-- Lock Command Modal -->
+<div id="lock-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeLockModal()">&times;</span>
+    <h3>Send Lock Command</h3>
+    <form id="lock-form">
+      <select id="lock-command">
+        <option value="lock_open">Open Lock</option>
+        <option value="lock_close">Close Lock</option>
+      </select>
+      <br><br>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<!-- Config Wait Modal -->
+<div id="config-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeConfigModal()">&times;</span>
+    <h3>Set Config Wait Time (seconds)</h3>
+    <form id="config-form">
+      <input type="number" id="wait-time" placeholder="30" min="1" required>
+      <br><br>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
 
   <script>
     // Initial gpsPoint from Flask
@@ -289,6 +335,47 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       initMap();
+    });
+
+    function openLockModal() { document.getElementById("lock-modal").style.display = "block"; }
+    function closeLockModal() { document.getElementById("lock-modal").style.display = "none"; }
+    function openConfigModal() { document.getElementById("config-modal").style.display = "block"; }
+    function closeConfigModal() { document.getElementById("config-modal").style.display = "none"; }
+
+    // Lock command submit
+    document.getElementById("lock-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const command = document.getElementById("lock-command").value;
+      try {
+        await fetch(`/publish/${currentIMEI}/lock`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: command })
+        });
+        alert("✅ Lock command sent!");
+        closeLockModal();
+      } catch (err) {
+        alert("❌ Failed to send lock command");
+        console.error(err);
+      }
+    });
+
+    // Config wait submit
+    document.getElementById("config-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const time = document.getElementById("wait-time").value;
+      try {
+        await fetch(`/publish/${currentIMEI}/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wait_time: time })
+        });
+        alert("✅ Config wait time sent!");
+        closeConfigModal();
+      } catch (err) {
+        alert("❌ Failed to send config");
+        console.error(err);
+      }
     });
 
     // Device console

@@ -232,6 +232,29 @@ def connect():
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 
+@app.route("/publish/<IMEI>/<cmd_type>", methods=["POST"])
+def publish_command(IMEI, cmd_type):
+    data = request.get_json()
+    
+    if cmd_type == "lock":
+        msg = data.get("command")  # lock_open / lock_close
+        topic = f"truck/{IMEI}/command/lock"
+    elif cmd_type == "config":
+        msg = data.get("wait_time")  # e.g., "30"
+        topic = f"truck/{IMEI}/command/config/wit"
+    else:
+        return jsonify({"success": False, "msg": "Unknown command"}), 400
+
+    # Use your MQTT manager or global client
+    try:
+        if IMEI in device_messages:  # if using your previous global client
+            client.publish(topic, str(msg))
+            return jsonify({"success": True, "msg": f"Published {msg} to {topic}"})
+        else:
+            return jsonify({"success": False, "msg": "IMEI not connected"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "msg": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80, debug=True)

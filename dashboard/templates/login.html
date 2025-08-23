@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lock Pack Login</title>
     <!-- Favicon -->
-    <link rel="icon" type="image/webp" href="{{ url_for('static', filename='logo.webp') }}">
+    <link rel="icon" type="image/svg" href="{{ url_for('static', filename='logo-02.svg') }}">
     <style>
         /* Minimal Music Login Form - Complete & Self-Contained */
 
@@ -17,7 +17,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #191414 0%, #1DB954 100%);
+            background: linear-gradient(135deg, #191414 0%, #2b45da 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -47,7 +47,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #1DB954, #1ed760);
+            background: linear-gradient(90deg, #1d61b9, #1e59d7);
         }
 
         .login-header {
@@ -105,7 +105,7 @@
 
         .form-group input:focus {
             background: #ffffff;
-            border-color: #1DB954;
+            border-color: #46b8cc;
             box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
         }
 
@@ -184,23 +184,10 @@
             transition: opacity 0.2s ease;
         }
 
-
-        .forgot-link {
-            color: #1DB954;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            transition: color 0.2s ease;
-        }
-
-        .forgot-link:hover {
-            color: #1ed760;
-        }
-
         /* Login Button */
         .login-btn {
             width: 100%;
-            background: #1DB954;
+            background: #3263e9;
             color: #ffffff;
             border: none;
             border-radius: 50px;
@@ -220,7 +207,7 @@
         }
 
         .login-btn:hover {
-            background: #1ed760;
+            background: #27a2db;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
         }
@@ -316,7 +303,7 @@
         }
 
         .signup-link a:hover {
-            color: #1ed760;
+            color: #1e7ed7;
             text-decoration: underline;
         }
 
@@ -413,10 +400,10 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="logo">
-                    <img width="124" height="124" src="{{ url_for('static', filename='logo.webp') }}" alt="Logo">
+                    <img width="250" height="250" src="{{ url_for('static', filename='logo-02.svg') }}" alt="Logo">
                 </div>
-                <h1>Avapardaz Hooshmand Afra</h1>
-                <p>Login to S-lock page</p>
+                <!-- <h1>Avapardaz Hooshmand Afra</h1> -->
+                <p><b>Login to Lock-Pack page</b></p>
             </div>
             
             <form method="POST">
