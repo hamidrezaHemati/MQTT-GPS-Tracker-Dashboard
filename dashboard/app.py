@@ -67,19 +67,27 @@ def on_message(client, userdata, msg):
     
     payload_str = msg.payload.decode().strip()
     IMEI = msg.topic.split("/")[1] if len(msg.topic.split("/")) > 1 else "unknown"
+
+    print("debug: IMEI: ", IMEI)
     
     # Remove braces if present
     if payload_str.startswith("{") and payload_str.endswith("}"):
         payload_str = payload_str[1:-1].strip()
 
+    print("debug: payload: ", payload_str)
+
     # Split into list by comma
     parts = [p.strip() for p in payload_str.split(",")]
+
+    print("DEBUG: time", parts[0], parts[1], parts[2])
 
     # Map to named variables
     HH, MM, SS = parts[0], parts[1], parts[2]
     lat, lon, Alt = parts[3], parts[4], parts[5]
     Batt, Lock, Temp = parts[6], parts[7], parts[8]
     RSSI, Cnt, Queued = parts[9], parts[10], parts[11]
+
+
 
     # Store for webpage log
     message = {
@@ -93,7 +101,7 @@ def on_message(client, userdata, msg):
         "Alt": float(Alt),
         "Batt": int(Batt),
         "Lock Status": Lock,
-        "Temprature": float(Temp),
+        "Temperature": float(Temp),
         "RSSI": int(RSSI),
         "Cnt": int(Cnt),
         "isQueued": int(Queued)
@@ -116,6 +124,7 @@ def on_message(client, userdata, msg):
     device_messages[IMEI].appendleft(message)
     print(f"DEBUG device: IMEA {IMEI}")
     print(f"DEBUG device: added_devices {added_devices}")
+    print("debug: message: ", device_messages[IMEI][0])
 
     # Append to CSV
     with open(devices_csv_path[IMEI], mode="a", newline="") as file:
@@ -206,7 +215,8 @@ def connect():
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
     topic = f'truck/{IMEI}/status'
-    success, msg = start_mqtt('localhost', mqtt_server_port, topic)
+    # success, msg = start_mqtt('localhost', mqtt_server_port, topic)
+    success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 

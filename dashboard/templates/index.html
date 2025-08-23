@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- Favicon -->
-  <link rel="icon" type="image/webp" href="{{ url_for('static', filename='logo.webp') }}">>
+  <link rel="icon" type="image/webp" href="{{ url_for('static', filename='logo.webp') }}">
   <!-- Leaflet CSS and JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -43,26 +43,84 @@
           <div class="device-card">
             <div class="device-card-content">
               <h4 id="device-title"></h4>
-              <p>Status: ✅ Connected</p>
             </div>
           </div>
 
-          <div class="status-card">
-            <div class="status-card-content">
-              <div id="device-params" class="params-grid">
-                <div><span>⏰</span> <b id="param-time">--:--:--</b></div>
-                <div><span>📍</span> Lat: <b id="param-lat">--</b></div>
-                <div><span>📍</span> Lon: <b id="param-lon">--</b></div>
-                <div><span>📏</span> Alt: <b id="param-alt">--</b> m</div>
-                <div><span>🔋</span> Battery: <b id="param-batt">--</b>%</div>
-                <div><span>🔒</span> Lock: <b id="param-lock">--</b></div>
-                <div><span>🌡️</span> Temp: <b id="param-temp">--</b> °C</div>
-                <div><span>📶</span> RSSI: <b id="param-rssi">--</b></div>
-                <div><span>🔢</span> Msg Cnt: <b id="param-cnt">--</b></div>
-                <div><span>📦</span> Queued: <b id="param-queued">--</b></div>
+         <div class="status-card">
+          
+          <div class="top-cards">
+            
+            <div class="highlighted-card">
+              <img src="{{ url_for('static', filename='icons/clock.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Time:</span>
+                <span id="param-time" class="param-value">--:--:--</span>
+              </div>
+            </div>
+
+            <div class="highlighted-card">
+              <img src="{{ url_for('static', filename='icons/gps_2.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Latitude:</span>
+                <span id="param-lat" class="param-value">--</span>
+                <span class="param-label">Longitude:</span>
+                <span id="param-lon" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="highlighted-card">
+              <img src="{{ url_for('static', filename='icons/lock.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Lock status</span>
+                <span id="param-lock" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="highlighted-card">
+              <img src="{{ url_for('static', filename='icons/full-battery.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Battery</span>
+                <span id="param-batt" class="param-value">--%</span>
               </div>
             </div>
           </div>
+
+          <div class="bottom-cards">
+            
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/temp.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Temperature</span>
+                <span id="param-temp" class="param-value">--°C</span>
+              </div>
+            </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/wifi.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">RSSI</span>
+                <span id="param-rssi" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/counter.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Msg Counter</span>
+                <span id="param-cnt" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/box.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Queue</span>
+                <span id="param-queued" class="param-value">--</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
 
           <div id="device-console" style="font-family: monospace; background: #ebe6e6; color: rgb(4, 116, 4); padding: 1em; height: 350px; overflow-y: auto;">
             Waiting for messages...
@@ -132,8 +190,8 @@
 
       // Initialize map with streets as default
       map = L.map('map', {
-        center: [35.7, 51.4],
-        zoom: 20,
+        center: [35.729015, 51.824891],
+        zoom: 16,
         layers: [streets]  // default layer
       });
 
@@ -211,22 +269,21 @@
         try {
           const response = await fetch(`/data/${IMEI}`);
           const data = await response.json();
+          console.log("Device data:", data); // 👈 Add this
 
           const consoleDiv = document.getElementById("device-console");
           consoleDiv.innerHTML = "";
 
           if (data.length > 0) {
-            // take the latest message
             const latest = data[0];  
 
-            // update status card fields
             document.getElementById("param-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
-            document.getElementById("param-alt").textContent = latest.Alt;
+            // document.getElementById("param-alt").textContent = latest.Alt; // only if you add it to HTML
             document.getElementById("param-batt").textContent = latest.Batt;
             document.getElementById("param-lock").textContent = latest["Lock Status"];
-            document.getElementById("param-temp").textContent = latest.Temprature;
+            document.getElementById("param-temp").textContent = latest.Temperature;
             document.getElementById("param-rssi").textContent = latest.RSSI;
             document.getElementById("param-cnt").textContent = latest.Cnt;
             document.getElementById("param-queued").textContent = latest.isQueued;
@@ -292,8 +349,8 @@
           li.className = "device-card";
           li.innerHTML = `
             <div class="device-card-content">
-              <h4>🚛 ${IMEI}</h4>
-              <p>Status: ✅ Connected</p>
+              <img src="{{ url_for('static', filename='icons/truck.png') }}" class="normal-icon">
+              <h4>${IMEI}</h4>
             </div>
           `;
           li.dataset.device = IMEI;
