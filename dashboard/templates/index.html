@@ -122,9 +122,9 @@
 
         </div>
 
-          <div id="device-console" style="font-family: monospace; background: #ebe6e6; color: rgb(4, 116, 4); padding: 1em; height: 350px; overflow-y: auto;">
+          <!-- <div id="device-console" style="font-family: monospace; background: #ebe6e6; color: rgb(4, 116, 4); padding: 1em; height: 350px; overflow-y: auto;">
             Waiting for messages...
-          </div>
+          </div> -->
         </div>
 
         <!-- History Section -->
@@ -271,8 +271,8 @@
           const data = await response.json();
           console.log("Device data:", data); // 👈 Add this
 
-          const consoleDiv = document.getElementById("device-console");
-          consoleDiv.innerHTML = "";
+          // const consoleDiv = document.getElementById("device-console");
+          // consoleDiv.innerHTML = "";
 
           if (data.length > 0) {
             const latest = data[0];  
@@ -290,12 +290,12 @@
           }
 
           // still print all messages in console
-          data.forEach(msg => {
-            const line = `[${msg.timestamp}] ${msg.topic} → ${msg.HH}:${msg.MM}:${msg.SS}, ${msg.lat}, ${msg.lon}, ${msg.Alt}, ${msg.Batt}, ${msg["Lock Status"]}, ${msg.Temprature}, ${msg.RSSI}, ${msg.Cnt}, ${msg.isQueued}`;
-            const p = document.createElement("div");
-            p.textContent = line;
-            consoleDiv.appendChild(p);
-          });
+          // data.forEach(msg => {
+          //   const line = `[${msg.timestamp}] ${msg.topic} → ${msg.HH}:${msg.MM}:${msg.SS}, ${msg.lat}, ${msg.lon}, ${msg.Alt}, ${msg.Batt}, ${msg["Lock Status"]}, ${msg.Temprature}, ${msg.RSSI}, ${msg.Cnt}, ${msg.isQueued}`;
+          //   const p = document.createElement("div");
+          //   p.textContent = line;
+          //   consoleDiv.appendChild(p);
+          // });
         } catch (err) {
           console.error("Error fetching device data:", err);
         }
@@ -365,8 +365,8 @@
             document.getElementById("device-page").classList.add("active");
 
             document.getElementById("device-title").textContent = `🚛 ${IMEI}`;
-            document.getElementById("device-console").innerHTML =
-              `<b>${IMEI}</b> selected<br>Waiting for messages...`;
+            // document.getElementById("device-console").innerHTML =
+            //   `<b>${IMEI}</b> selected<br>Waiting for messages...`;
 
             startDeviceConsole(IMEI);
             startUpdatingLocations(IMEI);
