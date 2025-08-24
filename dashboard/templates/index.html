@@ -152,6 +152,10 @@
           </div>
           
           <div class="command-cards">
+            <div class="command-card" id="rfid-command-btn" onclick="rfidOnModal()">
+              <img src="{{ url_for('static', filename='icons/rfid1.png') }}" alt="rfid Command">
+            </div>
+
             <div class="command-card" id="lock-command-btn" onclick="openLockModal()">
               <img src="{{ url_for('static', filename='icons/key.png') }}" alt="Lock Command">
             </div>
@@ -198,7 +202,24 @@
       </form>
     </div>
   </div>
-  <!-- Lock Command Modal -->
+
+<!-- Config rfid Modal -->
+<div id="rfid-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeRFIDModal()">&times;</span>
+    <h3>Turn On/Off RFID modlue</h3>
+    <form id="rfid-form">
+      <select id="rfid-command">
+        <option value="on">ON</option>
+        <option value="of">OFF</option>
+      </select>
+      <br><br>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<!-- Lock Command Modal -->
 <div id="lock-modal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="closeLockModal()">&times;</span>
@@ -215,12 +236,12 @@
 </div>
 
 <!-- Config Wait Modal -->
-<div id="config-modal" class="modal">
+<div id="wit-modal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="closeConfigModal()">&times;</span>
     <h3>Set Wake-up Interval Time for device (seconds)</h3>
-    <form id="config-form">
-      <input type="number" id="wait-time" placeholder="30" min="1" required>
+    <form id="wit-form">
+      <input type="number" id="wit-time" placeholder="30" min="1" required>
       <br><br>
       <button type="submit">Send</button>
     </form>
@@ -331,17 +352,37 @@
       initMap();
     });
 
+    function rfidOnModal() { document.getElementById("rfid-modal").style.display = "block"; }
+    function closeRFIDModal() { document.getElementById("rfid-modal").style.display = "none"; }
     function openLockModal() { document.getElementById("lock-modal").style.display = "block"; }
     function closeLockModal() { document.getElementById("lock-modal").style.display = "none"; }
-    function openConfigModal() { document.getElementById("config-modal").style.display = "block"; }
-    function closeConfigModal() { document.getElementById("config-modal").style.display = "none"; }
+    function openConfigModal() { document.getElementById("wit-modal").style.display = "block"; }
+    function closeConfigModal() { document.getElementById("wit-modal").style.display = "none"; }
+
+    // rfid command submit
+    document.getElementById("rfid-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      let rfid = document.getElementById("rfid-command").value;
+      try {
+        console.log(`/publish/${currentIMEI}/rfid`);
+        await fetch(`/publish/${currentIMEI}/rfid`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rfid: rfid })
+        });
+        alert("✅ RFID command sent!");
+        closeLockModal();
+      } catch (err) {
+        alert("❌ Failed to send RFID command");
+        console.error(err);
+      }
+    });
 
     // Lock command submit
     document.getElementById("lock-form").addEventListener("submit", async e => {
       e.preventDefault();
       const command = document.getElementById("lock-command").value;
       try {
-        console.log(`/publish/${currentIMEI}/lock`);
         await fetch(`/publish/${currentIMEI}/lock`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -356,14 +397,16 @@
     });
 
     // Config wait submit
-    document.getElementById("config-form").addEventListener("submit", async e => {
+    document.getElementById("wit-form").addEventListener("submit", async e => {
       e.preventDefault();
-      const time = document.getElementById("wait-time").value;
+      const time = document.getElementById("wit-time").value;
+      const value = "wit_on_" + time;   // based on topic and msgs structure
+
       try {
-        await fetch(`/publish/${currentIMEI}/config`, {
+        await fetch(`/publish/${currentIMEI}/wit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ wait_time: time })
+          body: JSON.stringify({ wait_time: value })
         });
         alert("✅ Config wait time sent!");
         closeConfigModal();

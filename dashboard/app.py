@@ -237,9 +237,12 @@ def publish_command(IMEI, cmd_type):
     if cmd_type == "lock":
         msg = data.get("command")  # lock_open / lock_close
         topic = f"truck/{IMEI}/command/lock"
-    elif cmd_type == "config":
+    elif cmd_type == "wit":
         msg = data.get("wait_time")  # e.g., "30"
         topic = f"truck/{IMEI}/command/config/wit"
+    elif cmd_type == "rfid":
+        msg = data.get("rfid")  # e.g., On/OFF
+        topic = f"truck/{IMEI}/command/config/rfid"
     else:
         return jsonify({"success": False, "msg": "Unknown command"}), 400
     
