@@ -149,23 +149,15 @@
                 </div>
               </div>
             </div>
-            
-            <div class="command-cards">
-              <div class="command-card" id="lock-command-btn">
-                <img src="{{ url_for('static', filename='icons/lock.png') }}" class="highlighted-icon">
-                <div class="param-info">
-                  <span class="param-label">Lock Command</span>
-                  <button onclick="openLockModal()">Send</button>
-                </div>
-              </div>
+          </div>
+          
+          <div class="command-cards">
+            <div class="command-card" id="lock-command-btn" onclick="openLockModal()">
+              <img src="{{ url_for('static', filename='icons/key.png') }}" alt="Lock Command">
+            </div>
 
-              <div class="command-card" id="config-command-btn">
-                <img src="{{ url_for('static', filename='icons/clock.png') }}" class="highlighted-icon">
-                <div class="param-info">
-                  <span class="param-label">Config Wait</span>
-                  <button onclick="openConfigModal()">Send</button>
-                </div>
-              </div>
+            <div class="command-card" id="config-command-btn" onclick="openConfigModal()">
+              <img src="{{ url_for('static', filename='icons/stop-watch.png') }}" alt="Config Wait">
             </div>
           </div>
 

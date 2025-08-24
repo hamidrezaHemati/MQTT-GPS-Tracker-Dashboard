@@ -282,35 +282,35 @@ li a:hover:not(.active) {
 
 .command-cards {
   display: flex;
-  gap: 12px;
+  gap: 20px;
   flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 50px;
 }
 
 .command-card {
-  flex: 1 1 200px; /* allows resizing, min width 200px */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: none;
   display: flex;
   align-items: center;
-  background: #f76880; /* light red */
-  padding: 12px;
-  border-radius: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  justify-content: center;
+  cursor: pointer;
+  /* box-shadow: 0 4px 10px rgba(0,0,0,0.2); */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
 }
 
 .command-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+  background: #f6d1d1; /* lighter on hover */
 }
 
-.command-icon {
-  width: 60px;
-  height: 60px;
-  margin-right: 10px;
-}
-
-.command-value {
-  font-size: 14px;
-  color: #111;
+.command-card img {
+  width: 75px;
+  height: 75px;
+  pointer-events: none; /* so click passes through to parent div */
 }
 
 .top-cards {
