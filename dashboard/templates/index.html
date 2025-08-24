@@ -8,6 +8,7 @@
   <link rel="icon" type="image/svg" href="{{ url_for('static', filename='logo-02.svg') }}">
   <!-- Leaflet CSS and JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/flipdown/dist/flipdown.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
@@ -104,10 +105,10 @@
             </div>
 
             <div class="normal-card">
-              <img src="{{ url_for('static', filename='icons/counter.png') }}" class="normal-icon">
+              <!-- <img src="{{ url_for('static', filename='icons/counter.png') }}" class="normal-icon"> -->
               <div class="param-info">
                 <span class="param-label">Msg Counter</span>
-                <span id="param-cnt" class="param-value">--</span>
+                <div id="msg-counter" class="flip-counter">0</div>
               </div>
             </div>
 
@@ -441,7 +442,8 @@
             document.getElementById("param-lock").textContent = latest["Lock Status"];
             document.getElementById("param-temp").textContent = latest.Temperature + " °C";
             document.getElementById("param-rssi").textContent = latest.RSSI;
-            document.getElementById("param-cnt").textContent = latest.Cnt;
+            // document.getElementById("param-cnt").textContent = latest.Cnt;
+            updateFlipCounter(latest.Cnt);
             document.getElementById("param-queued").textContent = latest.isQueued;
           }
 
@@ -539,6 +541,33 @@
         alert("⚠️ Failed to connect to server.");
       }
     });
+
+    let lastCnt = 0;
+
+    function updateFlipCounter(newValue) {
+      const container = document.getElementById("msg-counter");
+      const oldValue = lastCnt;
+
+      if (newValue === oldValue) return; // no change
+
+      container.innerHTML = ""; // clear digits
+      const digits = String(newValue).split("");
+
+      digits.forEach((d, i) => {
+        const span = document.createElement("span");
+        span.className = "flip-digit";
+        span.textContent = d;
+        container.appendChild(span);
+
+        // trigger flip if digit changed
+        if (String(oldValue).padStart(digits.length, "0")[i] !== d) {
+          setTimeout(() => span.classList.add("flip"), 50);
+          setTimeout(() => span.classList.remove("flip"), 600);
+        }
+      });
+
+      lastCnt = newValue;
+    }
   </script>
 </body>
 </html>
