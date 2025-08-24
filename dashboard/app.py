@@ -152,8 +152,6 @@ def start_mqtt(ip, port, topic):
 
         current_config = {"ip": ip, "port": port, "topic": topic}
 
-        print("Kir: ", current_config)
-
         connect_event.clear()
         connect_result = {"success": False, "msg": ""}
 
@@ -221,8 +219,6 @@ def connect():
     data = request.get_json()
     IMEI = data.get("IMEI")
 
-    print("Kir IMEI: ", IMEI)
-
     if not (IMEI):
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
@@ -234,6 +230,8 @@ def connect():
 
 @app.route("/publish/<IMEI>/<cmd_type>", methods=["POST"])
 def publish_command(IMEI, cmd_type):
+
+    print("DEBUG command: ", IMEI, cmd_type)
     data = request.get_json()
     
     if cmd_type == "lock":
@@ -244,11 +242,14 @@ def publish_command(IMEI, cmd_type):
         topic = f"truck/{IMEI}/command/config/wit"
     else:
         return jsonify({"success": False, "msg": "Unknown command"}), 400
+    
+    msg = '{' + str(msg) + '}'
+    print("DEBUG command: ", msg, topic)
 
     # Use your MQTT manager or global client
     try:
         if IMEI in device_messages:  # if using your previous global client
-            client.publish(topic, str(msg))
+            client.publish(topic, msg)
             return jsonify({"success": True, "msg": f"Published {msg} to {topic}"})
         else:
             return jsonify({"success": False, "msg": "IMEI not connected"}), 400
