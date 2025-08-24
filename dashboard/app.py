@@ -120,7 +120,7 @@ def on_message(client, userdata, msg):
         added_devices.append(IMEI)
         devices_csv_path[IMEI] = os.path.join(script_dir, IMEI + "_history.csv")
         device_messages[IMEI] = deque(maxlen=10)
-        create_csv_log(devices_csv_path[IMEI])
+        # create_csv_log(devices_csv_path[IMEI])
         device_locations[IMEI] = deque(maxlen=5)
 
     try:
@@ -135,11 +135,11 @@ def on_message(client, userdata, msg):
     print("debug: message: ", device_messages[IMEI][0])
 
     # Append to CSV
-    with open(devices_csv_path[IMEI], mode="a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([
-            msg.topic, HH, MM, SS, lat, lon, Alt, Batt, Lock, Temp, RSSI, Cnt, Queued
-        ])
+    # with open(devices_csv_path[IMEI], mode="a", newline="") as file:
+    #     writer = csv.writer(file)
+    #     writer.writerow([
+    #         msg.topic, HH, MM, SS, lat, lon, Alt, Batt, Lock, Temp, RSSI, Cnt, Queued
+    #     ])
 
     
 def start_mqtt(ip, port, topic):
@@ -223,8 +223,8 @@ def connect():
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
     topic = f'truck/{IMEI}/status'
-    success, msg = start_mqtt('localhost', mqtt_server_port, topic)
-    # success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
+    # success, msg = start_mqtt('localhost', mqtt_server_port, topic)
+    success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 
