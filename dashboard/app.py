@@ -223,8 +223,8 @@ def connect():
         return jsonify({"status": "error", "message": "Your device IMEI code is required"}), 400
     
     topic = f'truck/{IMEI}/status'
-    # success, msg = start_mqtt('localhost', mqtt_server_port, topic)
-    success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
+    success, msg = start_mqtt('localhost', mqtt_server_port, topic)
+    # success, msg = start_mqtt('185.215.244.182', mqtt_server_port, topic)
     status = "connected" if success else "error"
     return jsonify({"status": status, "message": msg})
 
