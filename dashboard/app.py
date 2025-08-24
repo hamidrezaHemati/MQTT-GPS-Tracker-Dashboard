@@ -245,15 +245,19 @@ def publish_command(IMEI, cmd_type):
     
     msg = '{' + str(msg) + '}'
     print("DEBUG command: ", msg, topic)
+    print("DEBUG command: devices", added_devices)
 
     # Use your MQTT manager or global client
     try:
-        if IMEI in device_messages:  # if using your previous global client
+        if IMEI in added_devices:  # if using your previous global client
+            print("DEBUG command: imei in device messages")
             client.publish(topic, msg)
             return jsonify({"success": True, "msg": f"Published {msg} to {topic}"})
         else:
+            print("DEBUG command: imei NOT in device messages")
             return jsonify({"success": False, "msg": "IMEI not connected"}), 400
     except Exception as e:
+        print("EXEPTION")
         return jsonify({"success": False, "msg": str(e)}), 500
 
 
