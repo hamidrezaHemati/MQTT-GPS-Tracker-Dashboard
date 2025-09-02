@@ -122,7 +122,6 @@ def login():
         return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
 
-
 @app.route("/dashboard")
 def dashboard():
     gps_point = [35.7762, 51.4768]
@@ -130,20 +129,20 @@ def dashboard():
         gps_point = [message_history[0]['lat'], message_history[0]['lon']]
     return render_template("index.html", gps_point=gps_point)
 
-
 @app.route('/data/<IMEI>')
 def data_for_device(IMEI):
     msgs = list(device_messages.get(IMEI, []))
     return make_response(jsonify(msgs), 200)
 
-
 @app.route("/device_location/<IMEI>")
 def device_location(IMEI):
     if IMEI in device_locations and device_locations[IMEI]:
         latest = device_locations[IMEI][0]
-        return jsonify({"success": True, "lat": latest["lat"], "lon": latest["lon"]})
+        return jsonify({
+            "success": True, 
+            "lat": latest["lat"], 
+            "lon": latest["lon"]})
     return jsonify({"success": False, "msg": "No location yet"})
-
 
 @app.route('/connect', methods=['POST'])
 def connect_device():
@@ -173,14 +172,14 @@ def publish_command(IMEI, cmd_type):
         return jsonify({"success": False, "msg": "Unknown command"}), 400
 
     msg_value = data.get("command") or data.get("wait_time") or data.get("rfid")
-    msg = json.dumps({"value": msg_value})
+    msg = '{' + str(msg_value) + '}'
 
     with client_lock:
         if IMEI in added_devices:
             client.publish(topic, msg)
             return jsonify({"success": True, "msg": f"Published {msg} to {topic}"})
         return jsonify({"success": False, "msg": "IMEI not connected"}), 400
-
+    
 
 # ------------------- Main -------------------
 if __name__ == "__main__":
