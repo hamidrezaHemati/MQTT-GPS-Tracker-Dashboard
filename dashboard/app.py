@@ -9,10 +9,12 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = "supersecretkey"  # session management
 
 # === MQTT Settings ===
-MQTT_SERVER = '94.182.137.200'
-MQTT_PORT = 1883
+# MQTT_SERVER = '94.182.137.200'
+MQTT_SERVER = os.getenv('MQTT_SERVER', '94.182.137.200')
+# MQTT_PORT = 1883
+MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
 CLIENT_ID = "dashboard_mqtt_hub"
-KEEPALIVE = 120  # seconds, adjust as needed
+KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
 USERNAME = "admin"
