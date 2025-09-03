@@ -12,7 +12,7 @@ COPY requirements.txt /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 8000
-EXPOSE 8000
+EXPOSE 80
 
 # Environment variables
 ENV MQTT_SERVER=94.182.137.200
