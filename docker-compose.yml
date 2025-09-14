@@ -1,9 +1,34 @@
 version: '3.8'
 
 services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # public MQTT
+    # write a minimal config and start mosquitto
+    command: >
+      sh -c 'mkdir -p /mosquitto/config &&
+             printf "listener 1883 0.0.0.0\nallow_anonymous true\n" > /mosquitto/config/mosquitto.conf &&
+             exec mosquitto -c /mosquitto/config/mosquitto.conf'
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
   flask-app:
     build: .
+    restart: unless-stopped
     ports:
       - "80:80"
     env_file:
       - .env
+    environment:
+      # Use values from .env if present, otherwise default to the local broker
+      MQTT_SERVER: ${MQTT_SERVER:-mosquitto}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+    depends_on:
+      - mosquitto
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
