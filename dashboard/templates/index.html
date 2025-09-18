@@ -445,6 +445,17 @@
             // document.getElementById("param-cnt").textContent = latest.Cnt;
             updateFlipCounter(latest.Cnt);
             document.getElementById("param-queued").textContent = latest.isQueued;
+          } else {
+            // Reset to default values when no data is available
+            document.getElementById("param-time").textContent = "--:--:--";
+            document.getElementById("param-lat").textContent = "--";
+            document.getElementById("param-lon").textContent = "--";
+            document.getElementById("param-batt").textContent = "--%";
+            document.getElementById("param-lock").textContent = "--";
+            document.getElementById("param-temp").textContent = "-- °C";
+            document.getElementById("param-rssi").textContent = "--";
+            updateFlipCounter(0);
+            document.getElementById("param-queued").textContent = "--";
           }
 
           // still print all messages in console
