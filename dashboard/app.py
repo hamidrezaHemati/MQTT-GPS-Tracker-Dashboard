@@ -9,11 +9,13 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = "supersecretkey"  # session management
 
 # === MQTT Settings ===
-# MQTT_SERVER = '94.182.137.200'
-MQTT_SERVER = os.getenv('MQTT_SERVER', '94.182.137.200')
+
+# MQTT_SERVER = os.getenv('MQTT_SERVER', '94.182.137.200')  # Shatel
+MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
+
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub"
+CLIENT_ID = "dashboard_mqtt_hub_local"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -63,14 +65,18 @@ def on_message(client, userdata, msg):
             payload = payload[1:-1].strip()
 
         parts = [p.strip() for p in payload.split(",")]
-        if len(parts) < 12:
+        print("DEBUG new format: number of parts: ", len(parts))
+        if len(parts) != 17:
             print(f"⚠️ Invalid payload for {IMEI}: {payload}")
             return
 
         HH, MM, SS = parts[0], parts[1], parts[2]
-        lat, lon, Alt = float(parts[3]), float(parts[4]), float(parts[5])
-        Batt, Lock, Temp = int(parts[6]), parts[7], float(parts[8])
-        RSSI, Cnt, Queued = int(parts[9]), int(parts[10]), int(parts[11])
+        lat, lon = float(parts[3]), float(parts[4])
+        gpsSource = parts[5]
+        gpsTravelledDistance, totalTravelledDistance, speed = float(parts[6]), float(parts[7]), float(parts[8])
+        Batt, Lock, Temp = int(parts[9]), parts[10], float(parts[11])
+        RSSI, Cnt, Queued = int(parts[12]), int(parts[13]), int(parts[14])
+        isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
 
         # Battery formatting
         Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
@@ -80,11 +86,14 @@ def on_message(client, userdata, msg):
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "topic": msg.topic,
             "HH": HH, "MM": MM, "SS": SS,
-            "lat": lat, "lon": lon, "Alt": Alt,
+            "lat": lat, "lon": lon, "gpsSource": gpsSource,
+            "gpsTravelledDistance": gpsTravelledDistance, "totalTravelledDistance": totalTravelledDistance, "speed": speed,
             "Batt": Batt, "Lock Status": Lock,
-            "Temperature": Temp, "RSSI": RSSI, "Cnt": Cnt,
-            "isQueued": Queued
+            "Temperature": Temp, "RSSI": RSSI, "Cnt": Cnt, "isQueued": Queued,
+            "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
         }
+
+        print(message)
 
         message_history.appendleft(message)
 
