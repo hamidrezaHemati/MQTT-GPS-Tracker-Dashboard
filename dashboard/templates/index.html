@@ -66,6 +66,8 @@
                 <span id="param-lat" class="param-value">--</span>
                 <span class="param-label">Longitude:</span>
                 <span id="param-lon" class="param-value">--</span>
+                <span class="param-label">Signal Source:</span>
+                <span id="param-gpsSource" class="param-value">--</span>
               </div>
             </div>
 
@@ -512,6 +514,7 @@
             document.getElementById("param-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
+            document.getElementById("param-gpsSource").textContent = latest.gpsSource;
             document.getElementById("param-speed").textContent = latest.speed + " KM/h"; 
             document.getElementById("param-traveledDistance").textContent = latest.gpsTravelledDistance + " KM";
             document.getElementById("param-totalTraveledDistance").textContent = latest.totalTravelledDistance + " KM";

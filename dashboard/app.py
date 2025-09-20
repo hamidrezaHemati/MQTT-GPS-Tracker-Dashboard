@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -96,6 +96,8 @@ def on_message(client, userdata, msg):
         isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
 
         RSSI_status = rssi_to_strength(RSSI)
+        if gpsSource == "G": gpsSource = "GPS"
+        if gpsSource == "B": gpsSource = "BTS"
 
         # Battery formatting
         Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
