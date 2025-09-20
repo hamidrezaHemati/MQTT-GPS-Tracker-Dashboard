@@ -55,6 +55,22 @@ def on_disconnect(client, userdata, rc):
         print(f"❌ Reconnect failed: {e}")
 
 
+def rssi_to_strength(rssi):
+    if rssi == 0:
+        return "No Signal"
+    elif 1 <= rssi <= 6:
+        return "Very Weak"
+    elif 7 <= rssi <= 12:
+        return "Weak"
+    elif 13 <= rssi <= 20:
+        return "Moderate"
+    elif 21 <= rssi <= 26:
+        return "Strong"
+    elif 27 <= rssi <= 31:
+        return "Very Strong"
+    else:
+        return "Invalid RSSI"
+
 def on_message(client, userdata, msg):
     try:
         payload = msg.payload.decode().strip()
@@ -65,11 +81,12 @@ def on_message(client, userdata, msg):
             payload = payload[1:-1].strip()
 
         parts = [p.strip() for p in payload.split(",")]
-        print("DEBUG new format: number of parts: ", len(parts))
+        print(parts)
+        print(len(parts))
         if len(parts) != 17:
             print(f"⚠️ Invalid payload for {IMEI}: {payload}")
             return
-
+        
         HH, MM, SS = parts[0], parts[1], parts[2]
         lat, lon = float(parts[3]), float(parts[4])
         gpsSource = parts[5]
@@ -77,6 +94,8 @@ def on_message(client, userdata, msg):
         Batt, Lock, Temp = int(parts[9]), parts[10], float(parts[11])
         RSSI, Cnt, Queued = int(parts[12]), int(parts[13]), int(parts[14])
         isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
+
+        RSSI_status = rssi_to_strength(RSSI)
 
         # Battery formatting
         Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
@@ -89,7 +108,7 @@ def on_message(client, userdata, msg):
             "lat": lat, "lon": lon, "gpsSource": gpsSource,
             "gpsTravelledDistance": gpsTravelledDistance, "totalTravelledDistance": totalTravelledDistance, "speed": speed,
             "Batt": Batt, "Lock Status": Lock,
-            "Temperature": Temp, "RSSI": RSSI, "Cnt": Cnt, "isQueued": Queued,
+            "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
             "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
         }
 
@@ -176,13 +195,14 @@ def publish_command(IMEI, cmd_type):
     topic_map = {
         "lock": f"truck/{IMEI}/command/lock",
         "wit": f"truck/{IMEI}/command/config/wit",
-        "rfid": f"truck/{IMEI}/command/config/rfid"
+        "rfid": f"truck/{IMEI}/command/config/rfid",
+        "gyroscope": f"truck/{IMEI}/command/config/gyroscope"
     }
     topic = topic_map.get(cmd_type)
     if not topic:
         return jsonify({"success": False, "msg": "Unknown command"}), 400
 
-    msg_value = data.get("command") or data.get("wait_time") or data.get("rfid")
+    msg_value = data.get("command") or data.get("wait_time") or data.get("rfid") or data.get("gyro_sensitivity")
     msg = '{' + str(msg_value) + '}'
 
     with client_lock:

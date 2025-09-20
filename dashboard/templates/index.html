@@ -99,8 +99,17 @@
             <div class="normal-card">
               <img src="{{ url_for('static', filename='icons/wifi.png') }}" class="normal-icon">
               <div class="param-info">
-                <span class="param-label">RSSI</span>
+                <span class="param-label">Signal Strength</span>
                 <span id="param-rssi" class="param-value">--</span>
+                <span id="param-rssi-status" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/speed.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Speed</span>
+                <span id="param-speed" class="param-value">--</span>
               </div>
             </div>
 
@@ -119,6 +128,31 @@
                 <span id="param-queued" class="param-value">--</span>
               </div>
             </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/rotate.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Travelled distance</span>
+                <span id="param-traveledDistance" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/rotate.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Total Travelled distance</span>
+                <span id="param-totalTraveledDistance" class="param-value">--</span>
+              </div>
+            </div>
+
+            <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/distance.png') }}" class="normal-icon">
+              <div class="param-info">
+                <span class="param-label">Distance to geo-fence</span>
+                <span id="param-distanceToGeo" class="param-value">--</span>
+              </div>
+            </div>
+
           </div>
 
           <div class="alarm-cards">
@@ -153,7 +187,7 @@
           </div>
           
           <div class="command-cards">
-            <div class="command-card" id="rfid-command-btn" onclick="rfidOnModal()">
+            <div class="command-card" id="rfid-command-btn" onclick="rfidConfigModal()">
               <img src="{{ url_for('static', filename='icons/rfid1.png') }}" alt="rfid Command">
             </div>
 
@@ -164,6 +198,11 @@
             <div class="command-card" id="config-command-btn" onclick="openConfigModal()">
               <img src="{{ url_for('static', filename='icons/stop-watch.png') }}" alt="Config Wait">
             </div>
+
+            <div class="command-card" id="gyro-command-btn" onclick="gyroConfigModal()">
+              <img src="{{ url_for('static', filename='icons/gyro.png') }}" alt="gyro config">
+            </div>
+
           </div>
 
         </div>
@@ -207,7 +246,7 @@
 <!-- Config rfid Modal -->
 <div id="rfid-modal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeRFIDModal()">&times;</span>
+    <span class="close" onclick="rfidConfigConfigModal()">&times;</span>
     <h3>Turn On/Off RFID modlue</h3>
     <form id="rfid-form">
       <select id="rfid-command">
@@ -243,6 +282,19 @@
     <h3>Set Wake-up Interval Time for device (seconds)</h3>
     <form id="wit-form">
       <input type="number" id="wit-time" placeholder="30" min="1" required>
+      <br><br>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<!-- gyro config Modal -->
+<div id="gyro-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeGyroConfigModal()">&times;</span>
+    <h3>Set Wake-up Interval Time for device (seconds)</h3>
+    <form id="gyro-form">
+      <input type="number" id="gyro-sensitivity" placeholder="5" min="0" required>
       <br><br>
       <button type="submit">Send</button>
     </form>
@@ -353,12 +405,14 @@
       initMap();
     });
 
-    function rfidOnModal() { document.getElementById("rfid-modal").style.display = "block"; }
-    function closeRFIDModal() { document.getElementById("rfid-modal").style.display = "none"; }
+    function rfidConfigModal() { document.getElementById("rfid-modal").style.display = "block"; }
+    function rfidConfigConfigModal() { document.getElementById("rfid-modal").style.display = "none"; }
     function openLockModal() { document.getElementById("lock-modal").style.display = "block"; }
     function closeLockModal() { document.getElementById("lock-modal").style.display = "none"; }
     function openConfigModal() { document.getElementById("wit-modal").style.display = "block"; }
     function closeConfigModal() { document.getElementById("wit-modal").style.display = "none"; }
+    function gyroConfigModal() { document.getElementById("gyro-modal").style.display = "block"; }
+    function closeGyroConfigModal() { document.getElementById("gyro-modal").style.display = "none"; }
 
     // rfid command submit
     document.getElementById("rfid-form").addEventListener("submit", async e => {
@@ -417,6 +471,27 @@
       }
     });
 
+    
+    // gyro Config submit
+    document.getElementById("gyro-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const sensitivity = document.getElementById("gyro-sensitivity").value;
+      const value = "gyro_on_" + sensitivity;   // based on topic and msgs structure
+
+      try {
+        await fetch(`/publish/${currentIMEI}/gyroscope`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gyro_sensitivity: value })
+        });
+        alert("✅ Gyro sensitivity sent!");
+        closeConfigModal();
+      } catch (err) {
+        alert("❌ Failed to send Gyro sensitivity");
+        console.error(err);
+      }
+    });
+
     // Device console
     let consoleInterval = null;
     function startDeviceConsole(IMEI) {
@@ -437,11 +512,15 @@
             document.getElementById("param-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
-            // document.getElementById("param-alt").textContent = latest.Alt; // only if you add it to HTML
+            document.getElementById("param-speed").textContent = latest.speed + " KM/h"; 
+            document.getElementById("param-traveledDistance").textContent = latest.gpsTravelledDistance + " KM";
+            document.getElementById("param-totalTraveledDistance").textContent = latest.totalTravelledDistance + " KM";
+            document.getElementById("param-distanceToGeo").textContent = latest.distanceToGeoFence + " KM";
             document.getElementById("param-batt").textContent = latest.Batt + "%";
             document.getElementById("param-lock").textContent = latest["Lock Status"];
             document.getElementById("param-temp").textContent = latest.Temperature + " °C";
             document.getElementById("param-rssi").textContent = latest.RSSI;
+            document.getElementById("param-rssi-status").textContent = latest.RSSI_status;
             // document.getElementById("param-cnt").textContent = latest.Cnt;
             updateFlipCounter(latest.Cnt);
             document.getElementById("param-queued").textContent = latest.isQueued;
@@ -450,21 +529,19 @@
             document.getElementById("param-time").textContent = "--:--:--";
             document.getElementById("param-lat").textContent = "--";
             document.getElementById("param-lon").textContent = "--";
+            document.getElementById("param-speed").textContent = "-- KM/H"; 
+            document.getElementById("param-traveledDistance").textContent =  "-- KM";
+            document.getElementById("param-totalTraveledDistance").textContent = "-- KM";
+            document.getElementById("param-distanceToGeo").textContent = "-- KM";
             document.getElementById("param-batt").textContent = "--%";
             document.getElementById("param-lock").textContent = "--";
             document.getElementById("param-temp").textContent = "-- °C";
             document.getElementById("param-rssi").textContent = "--";
+            document.getElementById("param-rssi-status").textContent = "No Signal";
             updateFlipCounter(0);
             document.getElementById("param-queued").textContent = "--";
           }
 
-          // still print all messages in console
-          // data.forEach(msg => {
-          //   const line = `[${msg.timestamp}] ${msg.topic} → ${msg.HH}:${msg.MM}:${msg.SS}, ${msg.lat}, ${msg.lon}, ${msg.Alt}, ${msg.Batt}, ${msg["Lock Status"]}, ${msg.Temprature}, ${msg.RSSI}, ${msg.Cnt}, ${msg.isQueued}`;
-          //   const p = document.createElement("div");
-          //   p.textContent = line;
-          //   consoleDiv.appendChild(p);
-          // });
         } catch (err) {
           console.error("Error fetching device data:", err);
         }
