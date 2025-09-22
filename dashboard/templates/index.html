@@ -495,13 +495,13 @@
     });
 
     // Device console
-    let consoleInterval = null;
-    function startDeviceConsole(IMEI) {
-      if (consoleInterval) clearInterval(consoleInterval);
+    let statusConsoleInterval = null;
+    function startStatusConsole(IMEI) {
+      if (statusConsoleInterval) clearInterval(statusConsoleInterval);
 
       async function fetchDeviceData() {
         try {
-          const response = await fetch(`/data/${IMEI}`);
+          const response = await fetch(`/data/${IMEI}/status`);
           const data = await response.json();
           console.log("Device data:", data); // 👈 Add this
 
@@ -532,10 +532,11 @@
             document.getElementById("param-time").textContent = "--:--:--";
             document.getElementById("param-lat").textContent = "--";
             document.getElementById("param-lon").textContent = "--";
+            document.getElementById("param-gpsSource").textContent = "--";
             document.getElementById("param-speed").textContent = "-- KM/H"; 
             document.getElementById("param-traveledDistance").textContent =  "-- KM";
             document.getElementById("param-totalTraveledDistance").textContent = "-- KM";
-            document.getElementById("param-distanceToGeo").textContent = "-- KM";
+            document.getElementById("param-distanceToGeo").textContent = "-- M";
             document.getElementById("param-batt").textContent = "--%";
             document.getElementById("param-lock").textContent = "--";
             document.getElementById("param-temp").textContent = "-- °C";
@@ -552,7 +553,69 @@
 
 
       fetchDeviceData();
-      consoleInterval = setInterval(fetchDeviceData, 2000);
+      statusConsoleInterval = setInterval(fetchDeviceData, 2000);
+    }
+
+    // Device RFID console
+    let rfidInterval = null;
+    function startRfidConsole(IMEI) {
+      if (rfidInterval) clearInterval(rfidInterval);
+
+      async function fetchRfidData() {
+        try {
+          const response = await fetch(`/data/${IMEI}/rfid`);
+          const data = await response.json();
+          console.log("RFID data:", data);
+
+          if (data.length > 0) {
+            const latest = data[0];
+            
+            document.getElementById("rfid-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+            document.getElementById("rfid-serial").textContent = latest.rfid_serial;
+            document.getElementById("rfid-action").textContent = latest.action_status;
+          } else {
+            document.getElementById("rfid-time").textContent = "--:--:--";
+            document.getElementById("rfid-serial").textContent = "--";
+            document.getElementById("rfid-action").textContent = "--";
+          }
+        } catch (err) {
+          console.error("Error fetching RFID data:", err);
+        }
+      }
+
+      fetchRfidData();
+      rfidInterval = setInterval(fetchRfidData, 2000);
+    }
+
+    // Device SMS console
+    let smsInterval = null;
+    function startSmsConsole(IMEI) {
+      if (smsInterval) clearInterval(smsInterval);
+
+      async function fetchSmsData() {
+        try {
+          const response = await fetch(`/data/${IMEI}/sms`);
+          const data = await response.json();
+          console.log("SMS data:", data);
+
+          if (data.length > 0) {
+            const latest = data[0];
+
+            document.getElementById("sms-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+            document.getElementById("sms-phone").textContent = latest.phone_number;
+            document.getElementById("sms-action").textContent = latest.action;
+          } else {
+            document.getElementById("sms-time").textContent = "--:--:--";
+            document.getElementById("sms-phone").textContent = "--";
+            document.getElementById("sms-action").textContent = "--";
+          }
+        } catch (err) {
+          console.error("Error fetching SMS data:", err);
+        }
+      }
+
+      fetchSmsData();
+      smsInterval = setInterval(fetchSmsData, 2000);
     }
 
     // Navbar switching
@@ -617,7 +680,7 @@
             // document.getElementById("device-console").innerHTML =
             //   `<b>${IMEI}</b> selected<br>Waiting for messages...`;
             currentIMEI = IMEI
-            startDeviceConsole(IMEI);
+            startStatusConsole(IMEI);
             startUpdatingLocations(IMEI);
           });
 

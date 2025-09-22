@@ -52,7 +52,7 @@ def on_connect(client, userdata, flags, rc):
             topic_status = f"truck/{imei}/status"
             topic_rfid_data = f"truck/{imei}/rfid"
             topic_sms_data = f"truck/{imei}/sms"
-            topic_gyroscope_data = f"truck/{imei}/sms"
+            topic_gyroscope_data = f"truck/{imei}/gyroscope"
             client.subscribe(topic_status)
             client.subscribe(topic_rfid_data)
             client.subscribe(topic_sms_data)
@@ -89,8 +89,6 @@ def rssi_to_strength(rssi):
 
 def handle_status_msg(msg, payload, IMEI):
     parts = [p.strip() for p in payload.split(",")]
-    print(parts)
-    print(len(parts))
     if len(parts) != 17:
         print(f"⚠️ Invalid payload for {IMEI}: {payload}")
         return
@@ -129,6 +127,48 @@ def handle_status_msg(msg, payload, IMEI):
     status_device_messages[IMEI].appendleft(message)
     device_locations[IMEI].appendleft({"lat": lat, "lon": lon})
 
+def handle_rfid_msg(msg, payload, IMEI):
+    parts = [p.strip() for p in payload.split(",")]
+    print(len(parts))
+    if len(parts) != 2:
+        print(f"⚠️ Invalid RFID payload for {IMEI}: {payload}")
+        return
+    
+    rfid_serial, action_status = parts
+    
+    message = {
+        "HH": datetime.now().strftime('%H'),
+        "MM": datetime.now().strftime('%M'),
+        "SS": datetime.now().strftime('%S'),
+        "topic": msg.topic,
+        "rfid_serial": rfid_serial, "action_status": action_status
+    }
+    print(message)
+
+    rfid_message_history.appendleft(message)
+    rfid_device_messages[IMEI].appendleft(message)
+
+def handle_sms_msg(msg, payload, IMEI):
+    parts = [p.strip() for p in payload.split(",")]
+    print(len(parts))
+    if len(parts) != 2:
+        print(f"⚠️ Invalid SMS payload for {IMEI}: {payload}")
+        return
+    
+    phone_number, action = parts[0], parts[1]
+    
+    message = {
+        "HH": datetime.now().strftime('%H'),
+        "MM": datetime.now().strftime('%M'),
+        "SS": datetime.now().strftime('%S'),
+        "topic": msg.topic,
+        "phone_number": phone_number, "action": action
+    }
+    print(message)
+
+    sms_message_history.appendleft(message)
+    sms_device_messages[IMEI].appendleft(message)
+
 def on_message(client, userdata, msg):
     try:
         topic_parts = msg.topic.split("/")
@@ -137,24 +177,27 @@ def on_message(client, userdata, msg):
         print("debug, suffix: ", IMEI, topic_suffix)
 
         payload = msg.payload.decode().strip()
+
+        if IMEI not in status_device_messages:
+            print(f"⚠️ Unknown IMEI message: {IMEI}, payload={payload}")
+            return
+
         if payload.startswith("{") and payload.endswith("}"):   # Remove braces
             payload = payload[1:-1].strip()
         
-        if IMEI not in status_device_messages:
-            status_device_messages[IMEI] = deque(maxlen=50)
-            device_locations[IMEI] = deque(maxlen=10)
-            added_devices.append(IMEI)
-
-
         if topic_suffix == "status":
-            print(f"status message for {IMEI}")
+            print(f"📦 status message for {IMEI}")
             handle_status_msg(msg, payload, IMEI)
         elif topic_suffix == 'rfid':
             print(f"🔑 RFID message for {IMEI}: {payload}")
+            handle_rfid_msg(msg, payload, IMEI)
         elif topic_suffix == 'sms':
-            print(f"⚠️ sms message for {IMEI}: {payload}")
+            print(f"📨 sms message for {IMEI}: {payload}")
+            handle_sms_msg(msg, payload, IMEI)
         elif topic_suffix == 'gyroscope':
-            print(f"⚠️ gyroscope message for {IMEI}: {payload}")
+            print(f"gyroscope message for {IMEI}: {payload}")
+        else:
+            print(f"⚠️ Unknown message type: {topic_suffix}, payload={payload}")
 
 
     except Exception as e:
@@ -193,9 +236,19 @@ def dashboard():
         gps_point = [status_message_history[0]['lat'], status_message_history[0]['lon']]
     return render_template("index.html", gps_point=gps_point)
 
-@app.route('/data/<IMEI>')
-def data_for_device(IMEI):
+@app.route('/data/<IMEI>/status')
+def status_data_for_device(IMEI):
     msgs = list(status_device_messages.get(IMEI, []))
+    return make_response(jsonify(msgs), 200)
+
+@app.route('/data/<IMEI>/rfid')
+def rfid_data_for_device(IMEI):
+    msgs = list(rfid_device_messages.get(IMEI, []))
+    return make_response(jsonify(msgs), 200)
+
+@app.route('/data/<IMEI>/sms')
+def sms_data_for_device(IMEI):
+    msgs = list(sms_device_messages.get(IMEI, []))
     return make_response(jsonify(msgs), 200)
 
 @app.route("/device_location/<IMEI>")
@@ -220,15 +273,19 @@ def connect_device():
     topic_status = f"truck/{IMEI}/status"
     topic_rfid_data = f"truck/{IMEI}/rfid"
     topic_sms_data = f"truck/{IMEI}/sms"
-    topic_gyroscope_data = f"truck/{IMEI}/sms"
+    topic_gyroscope_data = f"truck/{IMEI}/gyroscope"
 
     with client_lock:
-        if IMEI not in added_devices:
-            client.subscribe(topic_status)
-            client.subscribe(topic_rfid_data)
-            client.subscribe(topic_sms_data)
-            client.subscribe(topic_gyroscope_data)
-            added_devices.append(IMEI)
+        client.subscribe(topic_status)
+        client.subscribe(topic_rfid_data)
+        client.subscribe(topic_sms_data)
+        client.subscribe(topic_gyroscope_data)
+
+        added_devices.append(IMEI)
+        device_locations[IMEI] = deque(maxlen=10)
+        status_device_messages[IMEI] = deque(maxlen=50)
+        rfid_device_messages[IMEI] = deque(maxlen=10)
+        sms_device_messages[IMEI] = deque(maxlen=10)
     return jsonify({"status": "connected", "message": f"Subscribed to topics"})
 
 
