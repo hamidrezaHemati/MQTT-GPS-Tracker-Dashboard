@@ -24,10 +24,19 @@ PASSWORD = "admin"
 
 # === Storage ===
 script_dir = os.path.dirname(os.path.abspath(__file__))
-device_messages = {}   # IMEI -> deque of messages
+status_device_messages = {}   # IMEI -> deque of messages
 device_locations = {}  # IMEI -> deque of last N locations
 added_devices = []     # list of connected IMEIs
-message_history = deque(maxlen=50)
+status_message_history = deque(maxlen=50)
+
+rfid_device_messages = {}   # IMEI -> deque of rfid messages
+rfid_message_history = deque(maxlen=10)
+
+sms_device_messages = {}   # IMEI -> deque of sms messages
+sms_message_history = deque(maxlen=10)
+
+gyroscope_device_messages = {}   # IMEI -> deque of gyroscope messages
+gyroscope_message_history = deque(maxlen=10)
 
 # === MQTT Client ===
 client = mqtt.Client(CLIENT_ID)
@@ -76,6 +85,49 @@ def rssi_to_strength(rssi):
         return "Very Strong"
     else:
         return "Invalid RSSI"
+    
+
+def handle_status_msg(msg, payload, IMEI):
+    parts = [p.strip() for p in payload.split(",")]
+    print(parts)
+    print(len(parts))
+    if len(parts) != 17:
+        print(f"⚠️ Invalid payload for {IMEI}: {payload}")
+        return
+    
+    HH, MM, SS = parts[0], parts[1], parts[2]
+    lat, lon = float(parts[3]), float(parts[4])
+    gpsSource = parts[5]
+    gpsTravelledDistance, totalTravelledDistance, speed = float(parts[6]), float(parts[7]), float(parts[8])
+    Batt, Lock, Temp = int(parts[9]), parts[10], float(parts[11])
+    RSSI, Cnt, Queued = int(parts[12]), int(parts[13]), int(parts[14])
+    isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
+
+    RSSI_status = rssi_to_strength(RSSI)
+    if gpsSource == "G": gpsSource = "GPS"
+    if gpsSource == "B": gpsSource = "BTS"
+
+    # Battery formatting
+    Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
+    Lock = {"L": "Locked", "U": "Unlocked"}.get(Lock, "Undefined")
+
+    message = {
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "topic": msg.topic,
+        "HH": HH, "MM": MM, "SS": SS,
+        "lat": lat, "lon": lon, "gpsSource": gpsSource,
+        "gpsTravelledDistance": gpsTravelledDistance, "totalTravelledDistance": totalTravelledDistance, "speed": speed,
+        "Batt": Batt, "Lock Status": Lock,
+        "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
+        "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
+    }
+
+    print(message)
+
+    status_message_history.appendleft(message)
+
+    status_device_messages[IMEI].appendleft(message)
+    device_locations[IMEI].appendleft({"lat": lat, "lon": lon})
 
 def on_message(client, userdata, msg):
     try:
@@ -87,52 +139,23 @@ def on_message(client, userdata, msg):
         payload = msg.payload.decode().strip()
         if payload.startswith("{") and payload.endswith("}"):   # Remove braces
             payload = payload[1:-1].strip()
-
-        parts = [p.strip() for p in payload.split(",")]
-        print(parts)
-        print(len(parts))
-        if len(parts) != 17:
-            print(f"⚠️ Invalid payload for {IMEI}: {payload}")
-            return
         
-        HH, MM, SS = parts[0], parts[1], parts[2]
-        lat, lon = float(parts[3]), float(parts[4])
-        gpsSource = parts[5]
-        gpsTravelledDistance, totalTravelledDistance, speed = float(parts[6]), float(parts[7]), float(parts[8])
-        Batt, Lock, Temp = int(parts[9]), parts[10], float(parts[11])
-        RSSI, Cnt, Queued = int(parts[12]), int(parts[13]), int(parts[14])
-        isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
-
-        RSSI_status = rssi_to_strength(RSSI)
-        if gpsSource == "G": gpsSource = "GPS"
-        if gpsSource == "B": gpsSource = "BTS"
-
-        # Battery formatting
-        Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
-        Lock = {"L": "Locked", "U": "Unlocked"}.get(Lock, "Undefined")
-
-        message = {
-            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "topic": msg.topic,
-            "HH": HH, "MM": MM, "SS": SS,
-            "lat": lat, "lon": lon, "gpsSource": gpsSource,
-            "gpsTravelledDistance": gpsTravelledDistance, "totalTravelledDistance": totalTravelledDistance, "speed": speed,
-            "Batt": Batt, "Lock Status": Lock,
-            "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
-            "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
-        }
-
-        print(message)
-
-        message_history.appendleft(message)
-
-        if IMEI not in device_messages:
-            device_messages[IMEI] = deque(maxlen=50)
+        if IMEI not in status_device_messages:
+            status_device_messages[IMEI] = deque(maxlen=50)
             device_locations[IMEI] = deque(maxlen=10)
             added_devices.append(IMEI)
 
-        device_messages[IMEI].appendleft(message)
-        device_locations[IMEI].appendleft({"lat": lat, "lon": lon})
+
+        if topic_suffix == "status":
+            print(f"status message for {IMEI}")
+            handle_status_msg(msg, payload, IMEI)
+        elif topic_suffix == 'rfid':
+            print(f"🔑 RFID message for {IMEI}: {payload}")
+        elif topic_suffix == 'sms':
+            print(f"⚠️ sms message for {IMEI}: {payload}")
+        elif topic_suffix == 'gyroscope':
+            print(f"⚠️ gyroscope message for {IMEI}: {payload}")
+
 
     except Exception as e:
         print(f"⚠️ Error processing message: {e}")
@@ -166,13 +189,13 @@ def login():
 @app.route("/dashboard")
 def dashboard():
     gps_point = [35.7762, 51.4768]
-    if message_history:
-        gps_point = [message_history[0]['lat'], message_history[0]['lon']]
+    if status_message_history:
+        gps_point = [status_message_history[0]['lat'], status_message_history[0]['lon']]
     return render_template("index.html", gps_point=gps_point)
 
 @app.route('/data/<IMEI>')
 def data_for_device(IMEI):
-    msgs = list(device_messages.get(IMEI, []))
+    msgs = list(status_device_messages.get(IMEI, []))
     return make_response(jsonify(msgs), 200)
 
 @app.route("/device_location/<IMEI>")
