@@ -1,7 +1,7 @@
 import threading
 from flask import Flask, render_template, jsonify, make_response, request, session, redirect, url_for
 import paho.mqtt.client as mqtt
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import deque
 import os, json, csv
 
@@ -109,8 +109,10 @@ def handle_status_msg(msg, payload, IMEI):
     Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
     Lock = {"L": "Locked", "U": "Unlocked"}.get(Lock, "Undefined")
 
+    server_time = datetime.now()                                  # Get server local time
+    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     message = {
-        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "timestamp": iran_time.strftime('%Y-%m-%d %H:%M:%S'),
         "topic": msg.topic,
         "HH": HH, "MM": MM, "SS": SS,
         "lat": lat, "lon": lon, "gpsSource": gpsSource,
@@ -136,10 +138,12 @@ def handle_rfid_msg(msg, payload, IMEI):
     
     rfid_serial, action_status = parts
     
+    server_time = datetime.now()                                  # Get server local time
+    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     message = {
-        "HH": datetime.now().strftime('%H'),
-        "MM": datetime.now().strftime('%M'),
-        "SS": datetime.now().strftime('%S'),
+        "HH": iran_time.strftime('%H'),
+        "MM": iran_time.strftime('%M'),
+        "SS": iran_time.strftime('%S'),
         "topic": msg.topic,
         "rfid_serial": rfid_serial, "action_status": action_status
     }
@@ -157,10 +161,12 @@ def handle_sms_msg(msg, payload, IMEI):
     
     phone_number, action = parts[0], parts[1]
     
+    server_time = datetime.now()                                  # Get server local time
+    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     message = {
-        "HH": datetime.now().strftime('%H'),
-        "MM": datetime.now().strftime('%M'),
-        "SS": datetime.now().strftime('%S'),
+        "HH": iran_time.strftime('%H'),
+        "MM": iran_time.strftime('%M'),
+        "SS": iran_time.strftime('%S'),
         "topic": msg.topic,
         "phone_number": phone_number, "action": action
     }
