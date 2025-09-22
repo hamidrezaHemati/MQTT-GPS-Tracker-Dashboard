@@ -105,6 +105,9 @@ def handle_status_msg(msg, payload, IMEI):
     if gpsSource == "G": gpsSource = "GPS"
     if gpsSource == "B": gpsSource = "BTS"
 
+    if isInGeofence =="Y": isInGeofence = "in Geo-fence"
+    if isInGeofence =="N": isInGeofence = "Out of Geo-fence"
+
     # Battery formatting
     Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
     Lock = {"L": "Locked", "U": "Unlocked"}.get(Lock, "Undefined")

@@ -147,13 +147,13 @@
               </div>
             </div>
 
-            <div class="normal-card">
+            <!-- <div class="normal-card">
               <img src="{{ url_for('static', filename='icons/distance.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Distance to geo-fence</span>
                 <span id="param-distanceToGeo" class="param-value">--</span>
               </div>
-            </div>
+            </div> -->
 
           </div>
 
@@ -162,28 +162,22 @@
             <div class="alarm-card">
               <img src="{{ url_for('static', filename='icons/rfid.png') }}" class="highlighted-icon">
               <div class="param-info">
-                <span class="param-label">RFID Serial number:</span>
-                <span id="param-todo" class="alarm-value">--</span>
                 <span class="param-label">Attempted Time:</span>
-                <span id="param-time" class="alarm-value">--:--:--</span>
+                <span id="rfid-time" class="param-value">--:--:--</span>
+                <span class="param-label">RFID Serial number:</span>
+                <span id="rfid-serial" class="param-value">--</span>
+                <span class="param-label">Action status:</span>
+                <span id="rfid-action" class="param-value">--</span>
               </div>
             </div>
 
             <div class="alarm-card">
               <img src="{{ url_for('static', filename='icons/zone.png') }}" class="highlighted-icon">
               <div class="param-info">
-                <div class="param-row">
-                  <span class="param-label">Zone Name:</span>
-                  <span id="param-zone" class="alarm-value">Not Specified</span>
-                </div>
-                <div class="param-row">
+                  <span class="param-label">Distance to geo-fence</span>
+                  <span id="param-distanceToGeo" class="param-value">--</span>
                   <span class="param-label">Zone notification:</span>
-                  <span id="param-notif" class="alarm-value">--</span>
-                </div>
-                <div class="param-row">
-                  <span class="param-label">Attempted Time:</span>
-                  <span id="param-time" class="alarm-value">--:--:--</span>
-                </div>
+                  <span id="param-isInGeofence" class="param-value">--</span>
               </div>
             </div>
           </div>
@@ -518,7 +512,8 @@
             document.getElementById("param-speed").textContent = latest.speed + " KM/h"; 
             document.getElementById("param-traveledDistance").textContent = latest.gpsTravelledDistance + " KM";
             document.getElementById("param-totalTraveledDistance").textContent = latest.totalTravelledDistance + " KM";
-            document.getElementById("param-distanceToGeo").textContent = latest.distanceToGeoFence + " KM";
+            document.getElementById("param-distanceToGeo").textContent = latest.distanceToGeoFence + " M";
+            document.getElementById("param-isInGeofence").textContent = latest.isInGeofence;
             document.getElementById("param-batt").textContent = latest.Batt + "%";
             document.getElementById("param-lock").textContent = latest["Lock Status"];
             document.getElementById("param-temp").textContent = latest.Temperature + " °C";
@@ -537,6 +532,7 @@
             document.getElementById("param-traveledDistance").textContent =  "-- KM";
             document.getElementById("param-totalTraveledDistance").textContent = "-- KM";
             document.getElementById("param-distanceToGeo").textContent = "-- M";
+            document.getElementById("param-isInGeofence").textContent = "--";
             document.getElementById("param-batt").textContent = "--%";
             document.getElementById("param-lock").textContent = "--";
             document.getElementById("param-temp").textContent = "-- °C";
@@ -564,8 +560,13 @@
       async function fetchRfidData() {
         try {
           const response = await fetch(`/data/${IMEI}/rfid`);
+          console.log("Fetching RFID for IMEI:", IMEI);
           const data = await response.json();
           console.log("RFID data:", data);
+          if (!Array.isArray(data)) {
+              console.error("RFID data is not an array!", data);
+              return;
+          }
 
           if (data.length > 0) {
             const latest = data[0];
@@ -587,36 +588,36 @@
       rfidInterval = setInterval(fetchRfidData, 2000);
     }
 
-    // Device SMS console
-    let smsInterval = null;
-    function startSmsConsole(IMEI) {
-      if (smsInterval) clearInterval(smsInterval);
+    // // Device SMS console
+    // let smsInterval = null;
+    // function startSmsConsole(IMEI) {
+    //   if (smsInterval) clearInterval(smsInterval);
 
-      async function fetchSmsData() {
-        try {
-          const response = await fetch(`/data/${IMEI}/sms`);
-          const data = await response.json();
-          console.log("SMS data:", data);
+    //   async function fetchSmsData() {
+    //     try {
+    //       const response = await fetch(`/data/${IMEI}/sms`);
+    //       const data = await response.json();
+    //       console.log("SMS data:", data);
 
-          if (data.length > 0) {
-            const latest = data[0];
+    //       if (data.length > 0) {
+    //         const latest = data[0];
 
-            document.getElementById("sms-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
-            document.getElementById("sms-phone").textContent = latest.phone_number;
-            document.getElementById("sms-action").textContent = latest.action;
-          } else {
-            document.getElementById("sms-time").textContent = "--:--:--";
-            document.getElementById("sms-phone").textContent = "--";
-            document.getElementById("sms-action").textContent = "--";
-          }
-        } catch (err) {
-          console.error("Error fetching SMS data:", err);
-        }
-      }
+    //         document.getElementById("sms-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+    //         document.getElementById("sms-phone").textContent = latest.phone_number;
+    //         document.getElementById("sms-action").textContent = latest.action;
+    //       } else {
+    //         document.getElementById("sms-time").textContent = "--:--:--";
+    //         document.getElementById("sms-phone").textContent = "--";
+    //         document.getElementById("sms-action").textContent = "--";
+    //       }
+    //     } catch (err) {
+    //       console.error("Error fetching SMS data:", err);
+    //     }
+    //   }
 
-      fetchSmsData();
-      smsInterval = setInterval(fetchSmsData, 2000);
-    }
+    //   fetchSmsData();
+    //   smsInterval = setInterval(fetchSmsData, 2000);
+    // }
 
     // Navbar switching
     document.querySelectorAll(".ul0 a").forEach(link => {
@@ -681,6 +682,7 @@
             //   `<b>${IMEI}</b> selected<br>Waiting for messages...`;
             currentIMEI = IMEI
             startStatusConsole(IMEI);
+            startRfidConsole(IMEI)
             startUpdatingLocations(IMEI);
           });
 
