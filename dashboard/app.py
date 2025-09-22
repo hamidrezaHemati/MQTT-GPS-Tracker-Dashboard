@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub"
+CLIENT_ID = "dashboard_mqtt_hub_local"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -40,9 +40,15 @@ def on_connect(client, userdata, flags, rc):
         print("✅ Connected to MQTT Broker")
         # Resubscribe to all devices
         for imei in added_devices:
-            topic = f"truck/{imei}/status"
-            client.subscribe(topic)
-            print(f"📡 Subscribed to {topic}")
+            topic_status = f"truck/{imei}/status"
+            topic_rfid_data = f"truck/{imei}/rfid"
+            topic_sms_data = f"truck/{imei}/sms"
+            topic_gyroscope_data = f"truck/{imei}/sms"
+            client.subscribe(topic_status)
+            client.subscribe(topic_rfid_data)
+            client.subscribe(topic_sms_data)
+            client.subscribe(topic_gyroscope_data)
+            print(f"📡 Subscribed to {topic_status} and {topic_rfid_data} and {topic_sms_data} and {topic_gyroscope_data}")
     else:
         print(f"❌ MQTT Connection failed with code {rc}")
 
@@ -73,11 +79,13 @@ def rssi_to_strength(rssi):
 
 def on_message(client, userdata, msg):
     try:
-        payload = msg.payload.decode().strip()
-        IMEI = msg.topic.split("/")[1] if len(msg.topic.split("/")) > 1 else "unknown"
+        topic_parts = msg.topic.split("/")
+        IMEI = topic_parts[1] if len(msg.topic.split("/")) == 3 else "unknown"
+        topic_suffix = topic_parts[2] if len(msg.topic.split("/")) == 3 else "unknown"
+        print("debug, suffix: ", IMEI, topic_suffix)
 
-        # Remove braces
-        if payload.startswith("{") and payload.endswith("}"):
+        payload = msg.payload.decode().strip()
+        if payload.startswith("{") and payload.endswith("}"):   # Remove braces
             payload = payload[1:-1].strip()
 
         parts = [p.strip() for p in payload.split(",")]
@@ -145,6 +153,7 @@ def start_mqtt():
 # ------------------- Flask Routes -------------------
 @app.route("/", methods=["GET", "POST"])
 def login():
+    return redirect(url_for("dashboard"))
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -182,13 +191,22 @@ def connect_device():
     IMEI = data.get("IMEI")
     if not IMEI:
         return jsonify({"status": "error", "message": "IMEI required"}), 400
+    if IMEI in added_devices:
+        return jsonify({"status": "error", "message": "Device already exists"}), 400
 
-    topic = f"truck/{IMEI}/status"
+    topic_status = f"truck/{IMEI}/status"
+    topic_rfid_data = f"truck/{IMEI}/rfid"
+    topic_sms_data = f"truck/{IMEI}/sms"
+    topic_gyroscope_data = f"truck/{IMEI}/sms"
+
     with client_lock:
         if IMEI not in added_devices:
-            client.subscribe(topic)
+            client.subscribe(topic_status)
+            client.subscribe(topic_rfid_data)
+            client.subscribe(topic_sms_data)
+            client.subscribe(topic_gyroscope_data)
             added_devices.append(IMEI)
-    return jsonify({"status": "connected", "message": f"Subscribed to {topic}"})
+    return jsonify({"status": "connected", "message": f"Subscribed to topics"})
 
 
 @app.route("/publish/<IMEI>/<cmd_type>", methods=["POST"])
