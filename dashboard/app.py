@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -280,8 +280,6 @@ def connect_device():
     IMEI = data.get("IMEI")
     if not IMEI:
         return jsonify({"status": "error", "message": "IMEI required"}), 400
-    if IMEI in added_devices:
-        return jsonify({"status": "error", "message": "Device already exists"}), 400
 
     topic_status = f"truck/{IMEI}/status"
     topic_rfid_data = f"truck/{IMEI}/rfid"
