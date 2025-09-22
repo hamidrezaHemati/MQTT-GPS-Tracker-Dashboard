@@ -102,7 +102,6 @@
               <img src="{{ url_for('static', filename='icons/wifi.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Signal Strength</span>
-                <span id="param-rssi" class="param-value">--</span>
                 <span id="param-rssi-status" class="param-value">--</span>
               </div>
             </div>
@@ -146,15 +145,6 @@
                 <span id="param-totalTraveledDistance" class="param-value">--</span>
               </div>
             </div>
-
-            <!-- <div class="normal-card">
-              <img src="{{ url_for('static', filename='icons/distance.png') }}" class="normal-icon">
-              <div class="param-info">
-                <span class="param-label">Distance to geo-fence</span>
-                <span id="param-distanceToGeo" class="param-value">--</span>
-              </div>
-            </div> -->
-
           </div>
 
           <div class="alarm-cards">
@@ -163,11 +153,11 @@
               <img src="{{ url_for('static', filename='icons/rfid.png') }}" class="highlighted-icon">
               <div class="param-info">
                 <span class="param-label">Attempted Time:</span>
-                <span id="rfid-time" class="param-value">--:--:--</span>
+                <span id="rfid-time" class="alarm-value">--:--:--</span>
                 <span class="param-label">RFID Serial number:</span>
-                <span id="rfid-serial" class="param-value">--</span>
-                <span class="param-label">Action status:</span>
-                <span id="rfid-action" class="param-value">--</span>
+                <span id="rfid-serial" class="alarm-value">--</span>
+                <span class="param-label">Action:</span>
+                <span id="rfid-action" class="alarm-value">--</span>
               </div>
             </div>
 
@@ -175,9 +165,9 @@
               <img src="{{ url_for('static', filename='icons/zone.png') }}" class="highlighted-icon">
               <div class="param-info">
                   <span class="param-label">Distance to geo-fence</span>
-                  <span id="param-distanceToGeo" class="param-value">--</span>
+                  <span id="param-distanceToGeo" class="alarm-value">--</span>
                   <span class="param-label">Zone notification:</span>
-                  <span id="param-isInGeofence" class="param-value">--</span>
+                  <span id="param-isInGeofence" class="alarm-value">--</span>
               </div>
             </div>
           </div>
@@ -517,7 +507,7 @@
             document.getElementById("param-batt").textContent = latest.Batt + "%";
             document.getElementById("param-lock").textContent = latest["Lock Status"];
             document.getElementById("param-temp").textContent = latest.Temperature + " °C";
-            document.getElementById("param-rssi").textContent = latest.RSSI;
+            // document.getElementById("param-rssi").textContent = latest.RSSI;
             document.getElementById("param-rssi-status").textContent = latest.RSSI_status;
             // document.getElementById("param-cnt").textContent = latest.Cnt;
             updateFlipCounter(latest.Cnt);
@@ -536,7 +526,7 @@
             document.getElementById("param-batt").textContent = "--%";
             document.getElementById("param-lock").textContent = "--";
             document.getElementById("param-temp").textContent = "-- °C";
-            document.getElementById("param-rssi").textContent = "--";
+            // document.getElementById("param-rssi").textContent = "--";
             document.getElementById("param-rssi-status").textContent = "No Signal";
             updateFlipCounter(0);
             document.getElementById("param-queued").textContent = "--";
@@ -588,36 +578,36 @@
       rfidInterval = setInterval(fetchRfidData, 2000);
     }
 
-    // // Device SMS console
-    // let smsInterval = null;
-    // function startSmsConsole(IMEI) {
-    //   if (smsInterval) clearInterval(smsInterval);
+    // Device SMS console
+    let smsInterval = null;
+    function startSmsConsole(IMEI) {
+      if (smsInterval) clearInterval(smsInterval);
 
-    //   async function fetchSmsData() {
-    //     try {
-    //       const response = await fetch(`/data/${IMEI}/sms`);
-    //       const data = await response.json();
-    //       console.log("SMS data:", data);
+      async function fetchSmsData() {
+        try {
+          const response = await fetch(`/data/${IMEI}/sms`);
+          const data = await response.json();
+          console.log("SMS data:", data);
 
-    //       if (data.length > 0) {
-    //         const latest = data[0];
+          if (data.length > 0) {
+            const latest = data[0];
 
-    //         document.getElementById("sms-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
-    //         document.getElementById("sms-phone").textContent = latest.phone_number;
-    //         document.getElementById("sms-action").textContent = latest.action;
-    //       } else {
-    //         document.getElementById("sms-time").textContent = "--:--:--";
-    //         document.getElementById("sms-phone").textContent = "--";
-    //         document.getElementById("sms-action").textContent = "--";
-    //       }
-    //     } catch (err) {
-    //       console.error("Error fetching SMS data:", err);
-    //     }
-    //   }
+            document.getElementById("sms-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+            document.getElementById("sms-phone").textContent = latest.phone_number;
+            document.getElementById("sms-action").textContent = latest.action;
+          } else {
+            document.getElementById("sms-time").textContent = "--:--:--";
+            document.getElementById("sms-phone").textContent = "--";
+            document.getElementById("sms-action").textContent = "--";
+          }
+        } catch (err) {
+          console.error("Error fetching SMS data:", err);
+        }
+      }
 
-    //   fetchSmsData();
-    //   smsInterval = setInterval(fetchSmsData, 2000);
-    // }
+      fetchSmsData();
+      smsInterval = setInterval(fetchSmsData, 2000);
+    }
 
     // Navbar switching
     document.querySelectorAll(".ul0 a").forEach(link => {

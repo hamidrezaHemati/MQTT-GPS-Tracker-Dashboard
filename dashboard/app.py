@@ -140,6 +140,10 @@ def handle_rfid_msg(msg, payload, IMEI):
         return
     
     rfid_serial, action_status = parts
+
+    if action_status == "L": action_status = "Lock command"
+    if action_status == "U": action_status = "Unlock command"
+    if action_status == "N": action_status = "Unkown command"
     
     server_time = datetime.now()                                  # Get server local time
     iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
