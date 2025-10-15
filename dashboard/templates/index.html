@@ -297,7 +297,7 @@
     <span class="close" onclick="closeAddPhoneModal()">&times;</span>
     <h3>Add administrator phone number to this device</h3>
     <form id="add-phone-form">
-      <input type="number" id="new-phone-number" placeholder="+98 - 912123456" value="+98 " required>
+      <input type="text" id="new-phone-number" placeholder="+98 - 912123456" value="+98 " required>
       <br><br>
       <button type="submit">Send</button>
     </form>
@@ -500,16 +500,16 @@
     // add phone Config submit
     document.getElementById("add-phone-form").addEventListener("submit", async e => {
       e.preventDefault();
-      const new_phone_number = document.getElementById("new-phone-number").value;
-      let value = 'add_'
-      if (!new_phone_number.startsWith("+98")){
-        value = value + '+98' + new_phone_number
+      let new_phone_number = document.getElementById("new-phone-number").value.trim();
+      console.log("User input:", new_phone_number);
+      new_phone_number = new_phone_number.replace(/\s|-/g, ''); // Remove spaces and any hyphens
+      // Ensure it always starts with +98
+      if (!new_phone_number.startsWith("+98")) {
+        // Remove possible leading 0 if user types 0912...
+        new_phone_number = new_phone_number.replace(/^0/, '');
+        new_phone_number = "+98" + new_phone_number;
       }
-      else{
-        value = value + new_phone_number
-      }
-      console.log(new_phone_number);
-      console.log(value);
+      const value = "add_" + new_phone_number
 
       try {
         await fetch(`/publish/${currentIMEI}/newPhone`, {
