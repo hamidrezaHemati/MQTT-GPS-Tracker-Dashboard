@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -30,13 +30,13 @@ added_devices = []     # list of connected IMEIs
 # status_message_history = deque(maxlen=50)
 
 rfid_device_messages = {}   # IMEI -> deque of rfid messages
-rfid_message_history = deque(maxlen=10)
+rfid_message_history = deque(maxlen=100)
 
 sms_device_messages = {}   # IMEI -> deque of sms messages
-sms_message_history = deque(maxlen=10)
+sms_message_history = deque(maxlen=100)
 
 gyroscope_device_messages = {}   # IMEI -> deque of gyroscope messages
-gyroscope_message_history = deque(maxlen=10)
+gyroscope_message_history = deque(maxlen=100)
 
 # === MQTT Client ===
 client = mqtt.Client(CLIENT_ID)
@@ -298,10 +298,10 @@ def connect_device():
         client.subscribe(topic_gyroscope_data)
 
         added_devices.append(IMEI)
-        device_locations[IMEI] = deque(maxlen=50)
+        device_locations[IMEI] = deque(maxlen=100)
         status_device_messages[IMEI] = deque(maxlen=100)
-        rfid_device_messages[IMEI] = deque(maxlen=50)
-        sms_device_messages[IMEI] = deque(maxlen=50)
+        rfid_device_messages[IMEI] = deque(maxlen=100)
+        sms_device_messages[IMEI] = deque(maxlen=100)
     return jsonify({"status": "connected", "message": f"Subscribed to topics"})
 
 
