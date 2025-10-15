@@ -27,7 +27,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 status_device_messages = {}   # IMEI -> deque of messages
 device_locations = {}  # IMEI -> deque of last N locations
 added_devices = []     # list of connected IMEIs
-status_message_history = deque(maxlen=50)
+# status_message_history = deque(maxlen=50)
 
 rfid_device_messages = {}   # IMEI -> deque of rfid messages
 rfid_message_history = deque(maxlen=10)
@@ -127,11 +127,12 @@ def handle_status_msg(msg, payload, IMEI):
         "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
     }
 
-    status_message_history.appendleft(message)
-    print(f'Counter: {message['Cnt']}, status msg history size: {len(status_message_history)}')
-
-    status_device_messages[IMEI].appendleft(message)
-    device_locations[IMEI].appendleft({"lat": lat, "lon": lon})
+    # status_message_history.appendleft(message)
+    print(f'Counter: {message['Cnt']}')
+    with client_lock: # <-- Lock for thread safety
+        # Only one thread at a time can execute this block
+        status_device_messages[IMEI].appendleft(message)
+        device_locations[IMEI].appendleft({"lat": lat, "lon": lon})
 
 def handle_rfid_msg(msg, payload, IMEI):
     parts = [p.strip() for p in payload.split(",")]
@@ -157,8 +158,9 @@ def handle_rfid_msg(msg, payload, IMEI):
     }
     print(message)
 
-    rfid_message_history.appendleft(message)
-    rfid_device_messages[IMEI].appendleft(message)
+    with client_lock:
+        rfid_message_history.appendleft(message)
+        rfid_device_messages[IMEI].appendleft(message)
 
 def handle_sms_msg(msg, payload, IMEI):
     parts = [p.strip() for p in payload.split(",")]
@@ -180,8 +182,9 @@ def handle_sms_msg(msg, payload, IMEI):
     }
     print(message)
 
-    sms_message_history.appendleft(message)
-    sms_device_messages[IMEI].appendleft(message)
+    with client_lock:
+        sms_message_history.appendleft(message)
+        sms_device_messages[IMEI].appendleft(message)
 
 def on_message(client, userdata, msg):
     print("Incomming msg - on message function")
@@ -247,8 +250,8 @@ def login():
 @app.route("/dashboard")
 def dashboard():
     gps_point = [35.7762, 51.4768]
-    if status_message_history:
-        gps_point = [status_message_history[0]['lat'], status_message_history[0]['lon']]
+    # if status_message_history:
+    #     gps_point = [status_message_history[0]['lat'], status_message_history[0]['lon']]
     return render_template("index.html", gps_point=gps_point)
 
 @app.route('/data/<IMEI>/status')
@@ -295,10 +298,10 @@ def connect_device():
         client.subscribe(topic_gyroscope_data)
 
         added_devices.append(IMEI)
-        device_locations[IMEI] = deque(maxlen=10)
-        status_device_messages[IMEI] = deque(maxlen=50)
-        rfid_device_messages[IMEI] = deque(maxlen=10)
-        sms_device_messages[IMEI] = deque(maxlen=10)
+        device_locations[IMEI] = deque(maxlen=50)
+        status_device_messages[IMEI] = deque(maxlen=100)
+        rfid_device_messages[IMEI] = deque(maxlen=50)
+        sms_device_messages[IMEI] = deque(maxlen=50)
     return jsonify({"status": "connected", "message": f"Subscribed to topics"})
 
 
@@ -309,13 +312,14 @@ def publish_command(IMEI, cmd_type):
         "lock": f"truck/{IMEI}/command/lock",
         "wit": f"truck/{IMEI}/command/config/wit",
         "rfid": f"truck/{IMEI}/command/config/rfid",
-        "gyroscope": f"truck/{IMEI}/command/config/gyroscope"
+        "gyroscope": f"truck/{IMEI}/command/config/gyroscope",
+        "newPhone": f"truck/{IMEI}/command/config/phoneNumber"
     }
     topic = topic_map.get(cmd_type)
     if not topic:
         return jsonify({"success": False, "msg": "Unknown command"}), 400
 
-    msg_value = data.get("command") or data.get("wait_time") or data.get("rfid") or data.get("gyro_sensitivity")
+    msg_value = data.get("command") or data.get("wait_time") or data.get("rfid") or data.get("gyro_sensitivity") or data.get("new_phone")
     msg = '{' + str(msg_value) + '}'
 
     with client_lock:
