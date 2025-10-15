@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub"
+CLIENT_ID = "dashboard_mqtt_hub_local"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -88,6 +88,8 @@ def rssi_to_strength(rssi):
     
 
 def handle_status_msg(msg, payload, IMEI):
+    print(f"Incomming msg from {IMEI}")
+
     parts = [p.strip() for p in payload.split(",")]
     if len(parts) != 17:
         print(f"⚠️ Invalid payload for {IMEI}: {payload}")
@@ -113,9 +115,9 @@ def handle_status_msg(msg, payload, IMEI):
     Lock = {"L": "Locked", "U": "Unlocked"}.get(Lock, "Undefined")
 
     server_time = datetime.now()                                  # Get server local time
-    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    # iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     message = {
-        "timestamp": iran_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "timestamp": server_time.strftime('%Y-%m-%d %H:%M:%S'),
         "topic": msg.topic,
         "HH": HH, "MM": MM, "SS": SS,
         "lat": lat, "lon": lon, "gpsSource": gpsSource,
@@ -125,9 +127,8 @@ def handle_status_msg(msg, payload, IMEI):
         "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
     }
 
-    print(message)
-
     status_message_history.appendleft(message)
+    print(f'Counter: {message['Cnt']}, status msg history size: {len(status_message_history)}')
 
     status_device_messages[IMEI].appendleft(message)
     device_locations[IMEI].appendleft({"lat": lat, "lon": lon})
@@ -143,14 +144,14 @@ def handle_rfid_msg(msg, payload, IMEI):
 
     if action_status == "L": action_status = "Lock command"
     if action_status == "U": action_status = "Unlock command"
-    if action_status == "N": action_status = "Unkown command"
+    if action_status == "N": action_status = "Unkown command" # TODO: Modify this part with DATABASE 
     
     server_time = datetime.now()                                  # Get server local time
-    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    # iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     message = {
-        "HH": iran_time.strftime('%H'),
-        "MM": iran_time.strftime('%M'),
-        "SS": iran_time.strftime('%S'),
+        "HH": server_time.strftime('%H'),
+        "MM": server_time.strftime('%M'),
+        "SS": server_time.strftime('%S'),
         "topic": msg.topic,
         "rfid_serial": rfid_serial, "action_status": action_status
     }
@@ -171,9 +172,9 @@ def handle_sms_msg(msg, payload, IMEI):
     server_time = datetime.now()                                  # Get server local time
     iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     message = {
-        "HH": iran_time.strftime('%H'),
-        "MM": iran_time.strftime('%M'),
-        "SS": iran_time.strftime('%S'),
+        "HH": server_time.strftime('%H'),
+        "MM": server_time.strftime('%M'),
+        "SS": server_time.strftime('%S'),
         "topic": msg.topic,
         "phone_number": phone_number, "action": action
     }
@@ -183,11 +184,12 @@ def handle_sms_msg(msg, payload, IMEI):
     sms_device_messages[IMEI].appendleft(message)
 
 def on_message(client, userdata, msg):
+    print("Incomming msg - on message function")
     try:
         topic_parts = msg.topic.split("/")
         IMEI = topic_parts[1] if len(msg.topic.split("/")) == 3 else "unknown"
         topic_suffix = topic_parts[2] if len(msg.topic.split("/")) == 3 else "unknown"
-        print("debug, suffix: ", IMEI, topic_suffix)
+        print(f"on_message - IMEI: {IMEI}, suffix {topic_suffix}")
 
         payload = msg.payload.decode().strip()
 
@@ -199,16 +201,16 @@ def on_message(client, userdata, msg):
             payload = payload[1:-1].strip()
         
         if topic_suffix == "status":
-            print(f"📦 status message for {IMEI}")
+            print(f"📦 status message from {IMEI}")
             handle_status_msg(msg, payload, IMEI)
         elif topic_suffix == 'rfid':
-            print(f"🔑 RFID message for {IMEI}: {payload}")
+            print(f"🔑 RFID message from {IMEI}: {payload}")
             handle_rfid_msg(msg, payload, IMEI)
         elif topic_suffix == 'sms':
-            print(f"📨 sms message for {IMEI}: {payload}")
+            print(f"📨 sms message from {IMEI}: {payload}")
             handle_sms_msg(msg, payload, IMEI)
         elif topic_suffix == 'gyroscope':
-            print(f"gyroscope message for {IMEI}: {payload}")
+            print(f"gyroscope message from {IMEI}: {payload}")
         else:
             print(f"⚠️ Unknown message type: {topic_suffix}, payload={payload}")
 
