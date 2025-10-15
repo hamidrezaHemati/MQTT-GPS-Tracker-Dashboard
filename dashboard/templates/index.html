@@ -189,6 +189,10 @@
               <img src="{{ url_for('static', filename='icons/gyro.png') }}" alt="gyro config">
             </div>
 
+             <div class="command-card" id="add-phone-btn" onclick="addPhoneConfigModal()">
+              <img src="{{ url_for('static', filename='icons/phone-book.png') }}" alt="add phone config">
+            </div>
+
           </div>
 
         </div>
@@ -281,6 +285,19 @@
     <h3>Set Wake-up Interval Time for device (seconds)</h3>
     <form id="gyro-form">
       <input type="number" id="gyro-sensitivity" placeholder="5" min="0" required>
+      <br><br>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>
+
+<!-- add phone number config Modal -->
+<div id="add-phone-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeAddPhoneModal()">&times;</span>
+    <h3>Add administrator phone number to this device</h3>
+    <form id="add-phone-form">
+      <input type="text" id="new-phone-number" placeholder="+98 - 912123456" value="+98 " required>
       <br><br>
       <button type="submit">Send</button>
     </form>
@@ -399,6 +416,8 @@
     function closeConfigModal() { document.getElementById("wit-modal").style.display = "none"; }
     function gyroConfigModal() { document.getElementById("gyro-modal").style.display = "block"; }
     function closeGyroConfigModal() { document.getElementById("gyro-modal").style.display = "none"; }
+    function addPhoneConfigModal() { document.getElementById("add-phone-modal").style.display = "block"; }
+    function closeAddPhoneModal() { document.getElementById("add-phone-modal").style.display = "none"; }
 
     // rfid command submit
     document.getElementById("rfid-form").addEventListener("submit", async e => {
@@ -474,6 +493,34 @@
         closeConfigModal();
       } catch (err) {
         alert("❌ Failed to send Gyro sensitivity");
+        console.error(err);
+      }
+    });
+
+    // add phone Config submit
+    document.getElementById("add-phone-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      let new_phone_number = document.getElementById("new-phone-number").value.trim();
+      console.log("User input:", new_phone_number);
+      new_phone_number = new_phone_number.replace(/\s|-/g, ''); // Remove spaces and any hyphens
+      // Ensure it always starts with +98
+      if (!new_phone_number.startsWith("+98")) {
+        // Remove possible leading 0 if user types 0912...
+        new_phone_number = new_phone_number.replace(/^0/, '');
+        new_phone_number = "+98" + new_phone_number;
+      }
+      const value = "add_" + new_phone_number
+
+      try {
+        await fetch(`/publish/${currentIMEI}/newPhone`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ new_phone: value })
+        });
+        alert("✅ Phone number Added!");
+        closeConfigModal();
+      } catch (err) {
+        alert("❌ Failed to send the Phone number");
         console.error(err);
       }
     });
