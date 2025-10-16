@@ -128,7 +128,7 @@ def handle_status_msg(msg, payload, IMEI):
     }
 
     # status_message_history.appendleft(message)
-    print(f'Counter: {message['Cnt']}')
+    # print(f'Counter: {message['Cnt']}')
     with client_lock: # <-- Lock for thread safety
         # Only one thread at a time can execute this block
         status_device_messages[IMEI].appendleft(message)
