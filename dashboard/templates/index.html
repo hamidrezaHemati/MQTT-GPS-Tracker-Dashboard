@@ -542,12 +542,13 @@
         try {
           const response = await fetch(`/data/${IMEI}/status`);
           const data = await response.json();
+          console.log(`fetch status data from ${IMEI}`);
           
           // Double-check IMEI hasn't changed during fetch
           if (currentIMEI !== IMEI) return;
           
-          if (data.length > 0) {
-            const latest = data[0];  
+          if (data && Object.keys(data).length > 0) {
+            const latest = data;  
             document.getElementById("param-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
@@ -614,8 +615,8 @@
             return;
           }
           
-          if (data.length > 0) {
-            const latest = data[0];
+          if (data && Object.keys(data).length > 0) {
+            const latest = data;
             document.getElementById("rfid-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
             document.getElementById("rfid-serial").textContent = latest.rfid_serial;
             document.getElementById("rfid-action").textContent = latest.action_status;

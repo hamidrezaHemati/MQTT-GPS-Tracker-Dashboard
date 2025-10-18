@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub"
+CLIENT_ID = "dashboard_mqtt_hub_local"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -257,12 +257,14 @@ def dashboard():
 @app.route('/data/<IMEI>/status')
 def status_data_for_device(IMEI):
     msgs = list(status_device_messages.get(IMEI, []))
-    return make_response(jsonify(msgs), 200)
+    latest = msgs[0] if msgs else None
+    return make_response(jsonify(latest), 200) if latest else jsonify({})
 
 @app.route('/data/<IMEI>/rfid')
 def rfid_data_for_device(IMEI):
     msgs = list(rfid_device_messages.get(IMEI, []))
-    return make_response(jsonify(msgs), 200)
+    latest = msgs[0] if msgs else None
+    return make_response(jsonify(latest), 200) if latest else jsonify({})
 
 @app.route('/data/<IMEI>/sms')
 def sms_data_for_device(IMEI):
