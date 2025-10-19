@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local_1"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
