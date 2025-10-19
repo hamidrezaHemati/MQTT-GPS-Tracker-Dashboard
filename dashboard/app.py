@@ -91,7 +91,7 @@ def handle_status_msg(msg, payload, IMEI):
     print(f"Incomming msg from {IMEI}")
 
     parts = [p.strip() for p in payload.split(",")]
-    if len(parts) != 17:
+    if len(parts) != 19:
         print(f"⚠️ Invalid payload for {IMEI}: {payload}")
         return
     
@@ -111,8 +111,11 @@ def handle_status_msg(msg, payload, IMEI):
     if isInGeofence =="Y": isInGeofence = "in Geo-fence"
     if isInGeofence =="N": isInGeofence = "Out of Geo-fence"
 
-    jammingDetection = 'Jamming Detected' if jammingDetection == 'J' else '' if jammingDetection == 'V' else jammingDetection
-    spoofingDetection = 'Spoofing Detected' if spoofingDetection == 'S' else '' if spoofingDetection == 'V' else spoofingDetection
+    if jammingDetection == 'J': jammingDetection = 'Jamming' 
+    if jammingDetection == 'V': jammingDetection = ''
+
+    if spoofingDetection == 'S': spoofingDetection = 'Spoofing' 
+    if spoofingDetection == 'V': spoofingDetection = ''
 
 
     # Battery formatting
@@ -130,7 +133,7 @@ def handle_status_msg(msg, payload, IMEI):
         "Batt": Batt, "Lock Status": Lock,
         "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
         "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence,
-        "spoofingDetection": spoofingDetection, "jammingDetection": jammingDetection,
+        "spoofing": spoofingDetection, "jamming": jammingDetection
     }
 
     # status_message_history.appendleft(message)

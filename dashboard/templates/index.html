@@ -91,9 +91,11 @@
             <div class="normal-card">
               <img src="{{ url_for('static', filename='icons/satellite.png') }}" class="normal-icon">
               <div class="param-info">
-                <span class="param-label">Signal Source:</span>
+                <!-- <span class="param-label">Signal Source:</span> -->
                 <span id="param-gpsSource" class="param-value">--</span>
+                <span class="param-label">--------</span>
                 <span id="param-jamming" class="param-value">--</span>
+                <span class="param-label">--------</span>
                 <span id="param-spoofing" class="param-value">--</span>
               </div>
             </div>
@@ -138,7 +140,7 @@
               </div>
             </div>
 
-            <!-- <div class="normal-card">
+            <div class="normal-card hidden">
               <img src="{{ url_for('static', filename='icons/rotate.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Travelled distance</span>
@@ -146,13 +148,13 @@
               </div>
             </div>
 
-            <div class="normal-card">
+            <div class="normal-card hidden">
               <img src="{{ url_for('static', filename='icons/rotate.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Total Travelled distance</span>
                 <span id="param-totalTraveledDistance" class="param-value">--</span>
               </div>
-            </div> -->
+            </div>
           </div>
 
           <div class="alarm-cards">
@@ -561,8 +563,8 @@
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
             document.getElementById("param-gpsSource").textContent = latest.gpsSource;
-            document.getElementById("param-spoofing").textContent = latest.spoofingDetection;
-            document.getElementById("param-jamming").textContent = latest.jammingDetection;
+            document.getElementById("param-spoofing").textContent = latest.spoofing;
+            document.getElementById("param-jamming").textContent = latest.jamming;
             document.getElementById("param-speed").textContent = latest.speed + " KM/h"; 
             document.getElementById("param-traveledDistance").textContent = latest.gpsTravelledDistance + " KM";
             document.getElementById("param-totalTraveledDistance").textContent = latest.totalTravelledDistance + " KM";

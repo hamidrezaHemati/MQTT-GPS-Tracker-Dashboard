@@ -416,3 +416,7 @@ li a:hover:not(.active) {
 .flip-digit.flip {
   transform: rotateX(-90deg);
 }
+
+.hidden {
+  display: none;
+}
