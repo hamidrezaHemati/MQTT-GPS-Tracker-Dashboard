@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -91,7 +91,7 @@ def handle_status_msg(msg, payload, IMEI):
     print(f"Incomming msg from {IMEI}")
 
     parts = [p.strip() for p in payload.split(",")]
-    if len(parts) != 17:
+    if len(parts) != 19:
         print(f"⚠️ Invalid payload for {IMEI}: {payload}")
         return
     
@@ -102,6 +102,7 @@ def handle_status_msg(msg, payload, IMEI):
     Batt, Lock, Temp = int(parts[9]), parts[10], float(parts[11])
     RSSI, Cnt, Queued = int(parts[12]), int(parts[13]), int(parts[14])
     isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
+    spoofingDetection, jammingDetection = parts[17], parts[18]
 
     RSSI_status = rssi_to_strength(RSSI)
     if gpsSource == "G": gpsSource = "GPS"
@@ -109,6 +110,13 @@ def handle_status_msg(msg, payload, IMEI):
 
     if isInGeofence =="Y": isInGeofence = "in Geo-fence"
     if isInGeofence =="N": isInGeofence = "Out of Geo-fence"
+
+    if jammingDetection == 'J': jammingDetection = 'Jamming' 
+    if jammingDetection == 'V': jammingDetection = ''
+
+    if spoofingDetection == 'S': spoofingDetection = 'Spoofing' 
+    if spoofingDetection == 'V': spoofingDetection = ''
+
 
     # Battery formatting
     Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
@@ -124,7 +132,8 @@ def handle_status_msg(msg, payload, IMEI):
         "gpsTravelledDistance": gpsTravelledDistance, "totalTravelledDistance": totalTravelledDistance, "speed": speed,
         "Batt": Batt, "Lock Status": Lock,
         "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
-        "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
+        "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence,
+        "spoofing": spoofingDetection, "jamming": jammingDetection
     }
 
     # status_message_history.appendleft(message)
