@@ -66,8 +66,6 @@
                 <span id="param-lat" class="param-value">--</span>
                 <span class="param-label">Longitude:</span>
                 <span id="param-lon" class="param-value">--</span>
-                <span class="param-label">Signal Source:</span>
-                <span id="param-gpsSource" class="param-value">--</span>
               </div>
             </div>
 
@@ -89,15 +87,25 @@
           </div>
 
           <div class="bottom-cards">
-            
+
             <div class="normal-card">
-              <img src="{{ url_for('static', filename='icons/temp.png') }}" class="normal-icon">
+              <img src="{{ url_for('static', filename='icons/satellite.png') }}" class="normal-icon">
               <div class="param-info">
-                <span class="param-label">Temperature</span>
-                <span id="param-temp" class="param-value">-- °C</span>
+                <span class="param-label">Signal Source:</span>
+                <span id="param-gpsSource" class="param-value">--</span>
+                <span id="param-jamming" class="param-value">--</span>
+                <span id="param-spoofing" class="param-value">--</span>
               </div>
             </div>
 
+            <div class="normal-card">
+              <!-- <img src="{{ url_for('static', filename='icons/counter.png') }}" class="normal-icon"> -->
+              <div class="param-info">
+                <span class="param-label">Msg Counter</span>
+                <div id="msg-counter" class="flip-counter">0</div>
+              </div>
+            </div>
+            
             <div class="normal-card">
               <img src="{{ url_for('static', filename='icons/wifi.png') }}" class="normal-icon">
               <div class="param-info">
@@ -115,10 +123,10 @@
             </div>
 
             <div class="normal-card">
-              <!-- <img src="{{ url_for('static', filename='icons/counter.png') }}" class="normal-icon"> -->
+              <img src="{{ url_for('static', filename='icons/temp.png') }}" class="normal-icon">
               <div class="param-info">
-                <span class="param-label">Msg Counter</span>
-                <div id="msg-counter" class="flip-counter">0</div>
+                <span class="param-label">Temperature</span>
+                <span id="param-temp" class="param-value">-- °C</span>
               </div>
             </div>
 
@@ -130,7 +138,7 @@
               </div>
             </div>
 
-            <div class="normal-card">
+            <!-- <div class="normal-card">
               <img src="{{ url_for('static', filename='icons/rotate.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Travelled distance</span>
@@ -144,7 +152,7 @@
                 <span class="param-label">Total Travelled distance</span>
                 <span id="param-totalTraveledDistance" class="param-value">--</span>
               </div>
-            </div>
+            </div> -->
           </div>
 
           <div class="alarm-cards">
@@ -553,6 +561,8 @@
             document.getElementById("param-lat").textContent = latest.lat;
             document.getElementById("param-lon").textContent = latest.lon;
             document.getElementById("param-gpsSource").textContent = latest.gpsSource;
+            document.getElementById("param-spoofing").textContent = latest.spoofingDetection;
+            document.getElementById("param-jamming").textContent = latest.jammingDetection;
             document.getElementById("param-speed").textContent = latest.speed + " KM/h"; 
             document.getElementById("param-traveledDistance").textContent = latest.gpsTravelledDistance + " KM";
             document.getElementById("param-totalTraveledDistance").textContent = latest.totalTravelledDistance + " KM";
@@ -581,6 +591,8 @@
       document.getElementById("param-lat").textContent = "--";
       document.getElementById("param-lon").textContent = "--";
       document.getElementById("param-gpsSource").textContent = "--";
+      document.getElementById("param-spoofing").textContent = "--";
+      document.getElementById("param-jamming").textContent = "--";
       document.getElementById("param-speed").textContent = "-- KM/H"; 
       document.getElementById("param-traveledDistance").textContent = "-- KM";
       document.getElementById("param-totalTraveledDistance").textContent = "-- KM";
