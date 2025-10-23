@@ -343,4 +343,4 @@ def publish_command(IMEI, cmd_type):
 # ------------------- Main -------------------
 if __name__ == "__main__":
     start_mqtt()
-    app.run(host="0.0.0.0", port=80, debug=False)  # debug=False for production
+    app.run(host="0.0.0.0", port=5000, debug=False)  # debug=False for production

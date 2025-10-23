@@ -15,7 +15,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "9000:5000"
     env_file:
       - .env
     environment:
