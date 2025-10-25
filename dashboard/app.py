@@ -24,10 +24,12 @@ PASSWORD = "admin"
 
 # === Storage ===
 script_dir = os.path.dirname(os.path.abspath(__file__))
-status_device_messages = {}   # IMEI -> deque of messages
-device_locations = {}  # IMEI -> deque of last N locations
+
 added_devices = []     # list of connected IMEIs
 # status_message_history = deque(maxlen=50)
+
+status_device_messages = {}   # IMEI -> deque of messages
+device_locations = {}  # IMEI -> deque of last N locations
 
 rfid_device_messages = {}   # IMEI -> deque of rfid messages
 rfid_message_history = deque(maxlen=100)
@@ -37,6 +39,10 @@ sms_message_history = deque(maxlen=100)
 
 gyroscope_device_messages = {}   # IMEI -> deque of gyroscope messages
 gyroscope_message_history = deque(maxlen=100)
+
+security_alert_device_messages = {}   # IMEI -> deque of gyroscope messages
+security_alert_message_history = deque(maxlen=100)
+
 
 # === MQTT Client ===
 client = mqtt.Client(CLIENT_ID)
@@ -53,11 +59,13 @@ def on_connect(client, userdata, flags, rc):
             topic_rfid_data = f"truck/{imei}/rfid"
             topic_sms_data = f"truck/{imei}/sms"
             topic_gyroscope_data = f"truck/{imei}/gyroscope"
+            topic_security_alerts = f"truck/{imei}/security"
             client.subscribe(topic_status)
             client.subscribe(topic_rfid_data)
             client.subscribe(topic_sms_data)
             client.subscribe(topic_gyroscope_data)
-            print(f"📡 Subscribed to {topic_status} and {topic_rfid_data} and {topic_sms_data} and {topic_gyroscope_data}")
+            client.subscribe(topic_security_alerts)
+            print(f"📡 Subscribed to {topic_status}, {topic_rfid_data}, {topic_sms_data}, {topic_gyroscope_data} and {topic_security_alerts}")
     else:
         print(f"❌ MQTT Connection failed with code {rc}")
 
@@ -86,6 +94,11 @@ def rssi_to_strength(rssi):
     else:
         return "Invalid RSSI"
     
+
+def get_server_time():
+    server_time = datetime.now()                                  # Get server local time
+    # iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    return server_time
 
 def handle_status_msg(msg, payload, IMEI):
     print(f"Incomming msg from {IMEI}")
@@ -122,8 +135,7 @@ def handle_status_msg(msg, payload, IMEI):
     Batt = f"{Batt*10} ~ {(Batt+1)*10}" if Batt < 10 else "100"
     Lock = {"L": "Locked", "U": "Unlocked"}.get(Lock, "Undefined")
 
-    server_time = datetime.now()                                  # Get server local time
-    # iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    server_time = get_server_time()
     message = {
         "timestamp": server_time.strftime('%Y-%m-%d %H:%M:%S'),
         "topic": msg.topic,
@@ -145,25 +157,25 @@ def handle_status_msg(msg, payload, IMEI):
 
 def handle_rfid_msg(msg, payload, IMEI):
     parts = [p.strip() for p in payload.split(",")]
-    print(len(parts))
-    if len(parts) != 2:
+
+    if len(parts) != 5:
         print(f"⚠️ Invalid RFID payload for {IMEI}: {payload}")
         return
     
-    rfid_serial, action_status = parts
+    
+    HH, MM, SS = parts[0], parts[1], parts[2]
+    rfid_serial, action_status = parts[3], parts[4]
 
     if action_status == "L": action_status = "Lock command"
     if action_status == "U": action_status = "Unlock command"
     if action_status == "N": action_status = "Unkown command" # TODO: Modify this part with DATABASE 
     
-    server_time = datetime.now()                                  # Get server local time
-    # iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    server_time = get_server_time()
     message = {
-        "HH": server_time.strftime('%H'),
-        "MM": server_time.strftime('%M'),
-        "SS": server_time.strftime('%S'),
+        "timestamp": server_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "HH": HH, "MM": MM, "SS": SS,
+        "rfid_serial": rfid_serial, "action_status": action_status,
         "topic": msg.topic,
-        "rfid_serial": rfid_serial, "action_status": action_status
     }
     print(message)
 
@@ -174,26 +186,74 @@ def handle_rfid_msg(msg, payload, IMEI):
 def handle_sms_msg(msg, payload, IMEI):
     parts = [p.strip() for p in payload.split(",")]
     print(len(parts))
-    if len(parts) != 2:
+    if len(parts) != 5:
         print(f"⚠️ Invalid SMS payload for {IMEI}: {payload}")
         return
+
+    HH, MM, SS = parts[0], parts[1], parts[2]
+    phone_number, action = parts[3], parts[4]
     
-    phone_number, action = parts[0], parts[1]
-    
-    server_time = datetime.now()                                  # Get server local time
-    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    server_time = get_server_time()
     message = {
-        "HH": server_time.strftime('%H'),
-        "MM": server_time.strftime('%M'),
-        "SS": server_time.strftime('%S'),
-        "topic": msg.topic,
-        "phone_number": phone_number, "action": action
+        "timestamp": server_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "HH": HH, "MM": MM, "SS": SS,
+        "phone_number": phone_number, "action": action,
+        "topic": msg.topic
     }
     print(message)
 
     with client_lock:
         sms_message_history.appendleft(message)
         sms_device_messages[IMEI].appendleft(message)
+
+def handle_gyroscope_msg(msg, payload, IMEI):
+    parts = [p.strip() for p in payload.split(",")]
+    print(len(parts))
+    if len(parts) != 4:
+        print(f"⚠️ Invalid gyroscope payload for {IMEI}: {payload}")
+        return
+    
+    HH, MM, SS = parts[0], parts[1], parts[2]
+    detected_force = parts[3]
+    
+    server_time = get_server_time()
+    message = {
+        "timestamp": server_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "HH": HH, "MM": MM, "SS": SS,
+        "detected_force": detected_force,
+        "topic": msg.topic
+    }
+    print(message)
+
+    with client_lock:
+        gyroscope_message_history.appendleft(message)
+        gyroscope_device_messages[IMEI].appendleft(message)
+
+def handle_security_alert_msg(msg, payload, IMEI):
+    parts = [p.strip() for p in payload.split(",")]
+    print(len(parts))
+    if len(parts) != 4:
+        print(f"⚠️ Invalid security alert payload for {IMEI}: {payload}")
+        return
+    
+    HH, MM, SS = parts[0], parts[1], parts[2]
+    alert = parts[3]
+
+    if alert == "R": alert = 'Rope has been cut!'
+    if alert == "B": alert = 'Box Opened!'
+    
+    server_time = get_server_time()
+    message = {
+        "timestamp": server_time.strftime('%Y-%m-%d %H:%M:%S'),
+        "HH": HH, "MM": MM, "SS": SS,
+        "alert": alert,
+        "topic": msg.topic
+    }
+    print(message)
+
+    with client_lock:
+        security_alert_message_history.appendleft(message)
+        security_alert_device_messages[IMEI].appendleft(message)
 
 def on_message(client, userdata, msg):
     print("Incomming msg - on message function")
@@ -222,7 +282,11 @@ def on_message(client, userdata, msg):
             print(f"📨 sms message from {IMEI}: {payload}")
             handle_sms_msg(msg, payload, IMEI)
         elif topic_suffix == 'gyroscope':
-            print(f"gyroscope message from {IMEI}: {payload}")
+            print(f"📨 gyroscope message from {IMEI}: {payload}")
+            handle_gyroscope_msg(msg,payload, IMEI)
+        elif topic_suffix == 'security':
+            print(f"⚠ security message from {IMEI}: {payload}")
+            handle_security_alert_msg(msg,payload, IMEI)
         else:
             print(f"⚠️ Unknown message type: {topic_suffix}, payload={payload}")
 
@@ -278,7 +342,20 @@ def rfid_data_for_device(IMEI):
 @app.route('/data/<IMEI>/sms')
 def sms_data_for_device(IMEI):
     msgs = list(sms_device_messages.get(IMEI, []))
-    return make_response(jsonify(msgs), 200)
+    latest = msgs[0] if msgs else None
+    return make_response(jsonify(latest), 200) if latest else jsonify({})
+
+@app.route('/data/<IMEI>/gyroscope')
+def gyroscope_data_for_device(IMEI):
+    msgs = list(gyroscope_device_messages.get(IMEI, []))
+    latest = msgs[0] if msgs else None
+    return make_response(jsonify(latest), 200) if latest else jsonify({})
+
+@app.route('/data/<IMEI>/security')
+def security_alert_for_device(IMEI):
+    msgs = list(security_alert_device_messages.get(IMEI, []))
+    latest = msgs[0] if msgs else None
+    return make_response(jsonify(latest), 200) if latest else jsonify({})
 
 @app.route("/device_location/<IMEI>")
 def device_location(IMEI):
@@ -301,18 +378,22 @@ def connect_device():
     topic_rfid_data = f"truck/{IMEI}/rfid"
     topic_sms_data = f"truck/{IMEI}/sms"
     topic_gyroscope_data = f"truck/{IMEI}/gyroscope"
+    topic_security_alerts = f"truck/{IMEI}/security"
 
     with client_lock:
         client.subscribe(topic_status)
         client.subscribe(topic_rfid_data)
         client.subscribe(topic_sms_data)
         client.subscribe(topic_gyroscope_data)
+        client.subscribe(topic_security_alerts)
 
         added_devices.append(IMEI)
         device_locations[IMEI] = deque(maxlen=100)
         status_device_messages[IMEI] = deque(maxlen=100)
         rfid_device_messages[IMEI] = deque(maxlen=100)
         sms_device_messages[IMEI] = deque(maxlen=100)
+        gyroscope_device_messages[IMEI] = deque(maxlen=100)
+        security_alert_device_messages[IMEI] = deque(maxlen=100)
     return jsonify({"status": "connected", "message": f"Subscribed to topics"})
 
 

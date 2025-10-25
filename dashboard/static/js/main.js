@@ -9,6 +9,8 @@ let locationUpdateInterval = null; // Single interval for all devices
 let statusConsoleInterval = null;
 let rfidInterval = null;
 let smsInterval = null;
+let gyroInterval = null;
+let securityAlertInterval = null;
 
 // Available colors
 const availableColors = [
@@ -304,17 +306,8 @@ function startRfidConsole(IMEI) {
     
     try {
         const response = await fetch(`/data/${IMEI}/rfid`);
-        console.log("response: ");
-        console.log(response);
         const data = await response.json();
-        console.log("data: ");
-        console.log(data);
         if (currentIMEI !== IMEI) return;
-        
-        // if (!Array.isArray(data)) {
-        //   console.error("RFID data is not an array!", data);
-        //   return;
-        // }
         
         if (data && Object.keys(data).length > 0) {
         const latest = data;
@@ -352,11 +345,16 @@ function startSmsConsole(IMEI) {
     try {
         const response = await fetch(`/data/${IMEI}/sms`);
         const data = await response.json();
+
+        console.log(response);
+        console.log(data);
         
         if (currentIMEI !== IMEI) return;
         
-        if (data.length > 0) {
-        const latest = data[0];
+        if (data && Object.keys(data).length > 0) {
+        const latest = data;
+        console.log(latest);
+        console.log(latest.HH, latest.MM, latest.SS, latest.phone_number, latest.action);
         document.getElementById("sms-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
         document.getElementById("sms-phone").textContent = latest.phone_number;
         document.getElementById("sms-action").textContent = latest.action;
@@ -372,11 +370,89 @@ function startSmsConsole(IMEI) {
     smsInterval = setInterval(fetchSmsData, 2000);
 }
 
+
 function resetSmsDisplay() {
     document.getElementById("sms-time").textContent = "--:--:--";
     document.getElementById("sms-phone").textContent = "--";
     document.getElementById("sms-action").textContent = "--";
 }
+
+// Device security alert console - FIXED
+function starSecurityAlertConsole(IMEI) {
+    if (securityAlertInterval) {
+    clearInterval(securityAlertInterval);
+    securityAlertInterval = null;
+    }
+    
+    async function fetchSecurityAlertData() {
+    if (currentIMEI !== IMEI) return;
+    
+    try {
+        const response = await fetch(`/data/${IMEI}/security`);
+        const data = await response.json();
+        
+        if (currentIMEI !== IMEI) return;
+        
+        if (data && Object.keys(data).length > 0) {
+        const latest = data;
+        document.getElementById("security-alert-reason").textContent = latest.alert
+        document.getElementById("security-alert-detected-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+        } else {
+        resetSecurityAlertDisplay();
+        }
+    } catch (err) {
+        console.error("Error fetching Security Alert:", err);
+    }
+    }
+    
+    fetchSecurityAlertData();
+    securityAlertInterval = setInterval(fetchSecurityAlertData, 2000);
+}
+
+
+function resetSecurityAlertDisplay() {
+    document.getElementById("security-alert-detected-time").textContent = "--:--:--";
+    document.getElementById("security-alert-reason").textContent = "--";
+}
+
+// Device gyro console - FIXED
+function startGyroConsole(IMEI) {
+    if (gyroInterval) {
+    clearInterval(gyroInterval);
+    gyroInterval = null;
+    }
+    
+    async function fetchGyroData() {
+    if (currentIMEI !== IMEI) return;
+    
+    try {
+        const response = await fetch(`/data/${IMEI}/gyroscope`);
+        const data = await response.json();
+        
+        if (currentIMEI !== IMEI) return;
+        
+        if (data && Object.keys(data).length > 0) {
+        const latest = data;
+        document.getElementById("gyro-value").textContent = latest.detected_force
+        document.getElementById("gyro-time").textContent = `${latest.HH}:${latest.MM}:${latest.SS}`;
+        } else {
+        resetGyroDisplay();
+        }
+    } catch (err) {
+        console.error("Error fetching Gyro data:", err);
+    }
+    }
+    
+    fetchGyroData();
+    smsInterval = setInterval(fetchGyroData, 2000);
+}
+
+
+function resetGyroDisplay() {
+    document.getElementById("gyro-time").textContent = "--:--:--";
+    document.getElementById("gyro-value").textContent = "--";
+}
+
 
 // Navbar switching
 document.querySelectorAll(".ul0 a").forEach(link => {
@@ -443,6 +519,9 @@ document.getElementById("add-device-form").addEventListener("submit", async e =>
         // Start fetching data for THIS device
         startStatusConsole(IMEI);
         startRfidConsole(IMEI);
+        startSmsConsole(IMEI)
+        starSecurityAlertConsole(IMEI)
+        startGyroConsole(IMEI)
         });
         
         alert("✅ Connected to device " + IMEI);

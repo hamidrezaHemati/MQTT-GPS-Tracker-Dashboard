@@ -132,7 +132,7 @@
               </div>
             </div>
 
-            <div class="normal-card">
+            <div class="normal-card hidden">
               <img src="{{ url_for('static', filename='icons/box.png') }}" class="normal-icon">
               <div class="param-info">
                 <span class="param-label">Queue</span>
@@ -166,8 +166,20 @@
                 <span id="rfid-time" class="alarm-value">--:--:--</span>
                 <span class="param-label">RFID Serial number:</span>
                 <span id="rfid-serial" class="alarm-value">--</span>
-                <span class="param-label">Action:</span>
+                <span class="param-label">Command:</span>
                 <span id="rfid-action" class="alarm-value">--</span>
+              </div>
+            </div>
+
+            <div class="alarm-card">
+              <img src="{{ url_for('static', filename='icons/SMS.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Attempted Time:</span>
+                <span id="sms-time" class="alarm-value">--:--:--</span>
+                <span class="param-label">Phone number:</span>
+                <span id="sms-phone" class="alarm-value">--</span>
+                <span class="param-label">Command:</span>
+                <span id="sms-action" class="alarm-value">--</span>
               </div>
             </div>
 
@@ -180,6 +192,31 @@
                   <span id="param-isInGeofence" class="alarm-value">--</span>
               </div>
             </div>
+          </div>
+
+
+          <div class="alert-cards">
+            
+            <div class="alert-card">
+              <img src="{{ url_for('static', filename='icons/alert.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Security Alert:</span>
+                <span id="security-alert-reason" class="alert-value">--</span>
+                <span class="param-label">Detected at:</span>
+                <span id="security-alert-detected-time" class="alert-value">--:--:--</span>
+              </div>
+            </div>
+
+            <div class="alert-card">
+              <img src="{{ url_for('static', filename='icons/gyro.png') }}" class="highlighted-icon">
+              <div class="param-info">
+                <span class="param-label">Gyro Detected Force:</span>
+                <span id="gyro-value" class="alert-value">--</span>
+                <span class="param-label">Occurred at:</span>
+                <span id="gyro-time" class="alert-value">--:--:--</span>
+              </div>
+            </div>
+
           </div>
           
           <div class="command-cards">
