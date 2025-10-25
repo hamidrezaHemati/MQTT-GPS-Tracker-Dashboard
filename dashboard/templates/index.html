@@ -620,14 +620,17 @@
         
         try {
           const response = await fetch(`/data/${IMEI}/rfid`);
+          console.log("response: ");
+          console.log(response);
           const data = await response.json();
-          
+          console.log("data: ");
+          console.log(data);
           if (currentIMEI !== IMEI) return;
           
-          if (!Array.isArray(data)) {
-            console.error("RFID data is not an array!", data);
-            return;
-          }
+          // if (!Array.isArray(data)) {
+          //   console.error("RFID data is not an array!", data);
+          //   return;
+          // }
           
           if (data && Object.keys(data).length > 0) {
             const latest = data;
