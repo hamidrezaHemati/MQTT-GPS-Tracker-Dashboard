@@ -292,7 +292,7 @@ li a:hover:not(.active) {
   flex: 1 1 200px; /* allows resizing, min width 200px */
   display: flex;
   align-items: center;
-  background: #ff665b; /* light orange */
+  background: #f1675d; /* light orange */
   padding: 12px;
   border-radius: 15px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
@@ -321,7 +321,7 @@ li a:hover:not(.active) {
   gap: 20px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 50px;
+  margin-top: 40px;
 }
 
 .command-card {
@@ -330,6 +330,7 @@ li a:hover:not(.active) {
   border-radius: 50%;
   background: none;
   display: flex;
+  flex-direction: column;  /* 👈 make content vertical */
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -347,6 +348,14 @@ li a:hover:not(.active) {
   width: 75px;
   height: 75px;
   pointer-events: none; /* so click passes through to parent div */
+}
+
+.command-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  margin-top: 5px; /* 👈 space between image and text */
 }
 
 .top-cards {

@@ -221,26 +221,31 @@
           
           <div class="command-cards">
             <div class="command-card" id="rfid-command-btn" onclick="rfidConfigModal()">
-              <img src="{{ url_for('static', filename='icons/rfid1.png') }}" alt="rfid Command">
+              <img src="{{ url_for('static', filename='icons/rfid1.png') }}" alt="RFID Command">
+              <span class="command-title">On/Off RFID</span>
             </div>
 
             <div class="command-card" id="lock-command-btn" onclick="openLockModal()">
               <img src="{{ url_for('static', filename='icons/key.png') }}" alt="Lock Command">
+              <span class="command-title">Command Lock state</span>
             </div>
 
             <div class="command-card" id="config-command-btn" onclick="openConfigModal()">
               <img src="{{ url_for('static', filename='icons/stop-watch.png') }}" alt="Config Wait">
+              <span class="command-title">Set Wake Up Interval</span>
             </div>
 
             <div class="command-card" id="gyro-command-btn" onclick="gyroConfigModal()">
-              <img src="{{ url_for('static', filename='icons/gyro.png') }}" alt="gyro config">
+              <img src="{{ url_for('static', filename='icons/gyro.png') }}" alt="Gyro Config">
+              <span class="command-title">Set Gyroscope Sensitivity</span>
             </div>
 
-             <div class="command-card" id="add-phone-btn" onclick="addPhoneConfigModal()">
-              <img src="{{ url_for('static', filename='icons/phone-book.png') }}" alt="add phone config">
+            <div class="command-card" id="add-phone-btn" onclick="addPhoneConfigModal()">
+              <img src="{{ url_for('static', filename='icons/phone-book.png') }}" alt="Add Phone Config">
+              <span class="command-title">Add Adminatory Phonenumber</span>
             </div>
-
           </div>
+
 
         </div>
 

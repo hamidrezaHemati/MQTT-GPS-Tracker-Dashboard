@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -97,8 +97,8 @@ def rssi_to_strength(rssi):
 
 def get_server_time():
     server_time = datetime.now()                                  # Get server local time
-    # iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
-    return server_time
+    iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
+    return iran_time
 
 def handle_status_msg(msg, payload, IMEI):
     print(f"Incomming msg from {IMEI}")
