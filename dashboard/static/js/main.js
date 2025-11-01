@@ -249,6 +249,10 @@ function startStatusConsole(IMEI) {
         document.getElementById("param-lat").textContent = latest.lat;
         document.getElementById("param-lon").textContent = latest.lon;
         document.getElementById("param-gpsSource").textContent = latest.gpsSource;
+        document.getElementById("param-MCC").textContent = latest.MCC;
+        document.getElementById("param-MNC").textContent = latest.MNC;
+        document.getElementById("param-LAC").textContent = latest.LAC;
+        document.getElementById("param-Cell_ID").textContent = latest.Cell_ID;
         document.getElementById("param-spoofing").textContent = latest.spoofing;
         document.getElementById("param-jamming").textContent = latest.jamming;
         document.getElementById("param-speed").textContent = latest.speed + " KM/h"; 
@@ -279,6 +283,10 @@ function resetStatusDisplay() {
     document.getElementById("param-lat").textContent = "--";
     document.getElementById("param-lon").textContent = "--";
     document.getElementById("param-gpsSource").textContent = "--";
+    document.getElementById("param-MCC").textContent = "--";
+    document.getElementById("param-MNC").textContent = "--";
+    document.getElementById("param-LAC").textContent = "--";
+    document.getElementById("param-Cell_ID").textContent = "--";
     document.getElementById("param-spoofing").textContent = "--";
     document.getElementById("param-jamming").textContent = "--";
     document.getElementById("param-speed").textContent = "-- KM/H"; 

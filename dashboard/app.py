@@ -15,7 +15,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub"
+CLIENT_ID = "dashboard_mqtt_hub_local"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -104,18 +104,22 @@ def handle_status_msg(msg, payload, IMEI):
     print(f"Incomming msg from {IMEI}")
 
     parts = [p.strip() for p in payload.split(",")]
-    if len(parts) != 19:
+    if len(parts) != 21:
         print(f"⚠️ Invalid payload for {IMEI}: {payload}")
         return
     
+    # ------ time slut ------
     HH, MM, SS = parts[0], parts[1], parts[2]
+    # ------ GPS Data -------
     lat, lon = float(parts[3]), float(parts[4])
     gpsSource = parts[5]
-    gpsTravelledDistance, totalTravelledDistance, speed = float(parts[6]), float(parts[7]), float(parts[8])
-    Batt, Lock, Temp = int(parts[9]), parts[10], float(parts[11])
-    RSSI, Cnt, Queued = int(parts[12]), int(parts[13]), int(parts[14])
-    isInGeofence, distanceToGeoFence = parts[15], int(parts[16])
-    spoofingDetection, jammingDetection = parts[17], parts[18]
+    MCC, MNC, LAC, Cell_ID = parts[6], parts[7], parts[8], parts[9]
+    spoofingDetection, jammingDetection = parts[10], parts[11]
+    # ------- Other Data ---
+    speed, Batt, Lock, Temp = float(parts[12]), int(parts[13]), parts[14], float(parts[15])
+    RSSI, Cnt, Queued = int(parts[16]), int(parts[17]), int(parts[18])
+    isInGeofence, distanceToGeoFence = parts[19], int(parts[20])
+    
 
     RSSI_status = rssi_to_strength(RSSI)
     if gpsSource == "G": gpsSource = "GPS"
@@ -141,11 +145,11 @@ def handle_status_msg(msg, payload, IMEI):
         "topic": msg.topic,
         "HH": HH, "MM": MM, "SS": SS,
         "lat": lat, "lon": lon, "gpsSource": gpsSource,
-        "gpsTravelledDistance": gpsTravelledDistance, "totalTravelledDistance": totalTravelledDistance, "speed": speed,
-        "Batt": Batt, "Lock Status": Lock,
+        "MCC": MCC, "MNC": MNC, "LAC": LAC, "Cell_ID": Cell_ID,
+        "spoofing": spoofingDetection, "jamming": jammingDetection,
+        "speed": speed,"Batt": Batt, "Lock Status": Lock,
         "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
-        "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence,
-        "spoofing": spoofingDetection, "jamming": jammingDetection
+        "isInGeofence": isInGeofence, "distanceToGeoFence": distanceToGeoFence
     }
 
     # status_message_history.appendleft(message)
@@ -161,7 +165,6 @@ def handle_rfid_msg(msg, payload, IMEI):
     if len(parts) != 5:
         print(f"⚠️ Invalid RFID payload for {IMEI}: {payload}")
         return
-    
     
     HH, MM, SS = parts[0], parts[1], parts[2]
     rfid_serial, action_status = parts[3], parts[4]
@@ -192,6 +195,9 @@ def handle_sms_msg(msg, payload, IMEI):
 
     HH, MM, SS = parts[0], parts[1], parts[2]
     phone_number, action = parts[3], parts[4]
+
+    if action == "L": action = "Lock command"
+    if action == "U": action = "unlock command"
     
     server_time = get_server_time()
     message = {
