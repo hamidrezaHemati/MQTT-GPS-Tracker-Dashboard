@@ -16,7 +16,7 @@ MQTT_SERVER = os.getenv('MQTT_SERVER', '46.62.161.208')    # Heltzner
 
 # MQTT_PORT = 1883
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
-CLIENT_ID = "dashboard_mqtt_hub_local"
+CLIENT_ID = "dashboard_mqtt_hub"
 KEEPALIVE = 600  # seconds, adjust as needed
 
 # === Credentials ===
@@ -111,21 +111,42 @@ import requests
 API_URL = "https://us1.unwiredlabs.com/v2/process.php"
 API_TOKEN = "pk.cb4111299ee690acb4bdd16fe1f4903f"  # <-- your token
 
+def parse_bts_value(value):
+    """
+    Detect whether the input value is hexadecimal or decimal,
+    then return it as a decimal integer.
+    """
+    value = str(value).strip().lower()
+
+    # if contains any hex characters beyond 0-9 → treat as hex
+    if any(c in "abcdef" for c in value):
+        try:
+            return int(value, 16)
+        except ValueError:
+            print(f"⚠️ Invalid hex value: {value}")
+            return None
+    else:
+        try:
+            return int(value)
+        except ValueError:
+            print(f"⚠️ Invalid decimal value: {value}")
+            return None
+
 def get_bts_location_from_openCellID_API(MCC, MNC, LAC, cellID):
     """
     Query OpenCellID (UnwiredLabs) API to get BTS (cell tower) latitude and longitude.
     Returns (lat, lon) if found, otherwise (None, None).
     """
-    print("DEBUG in api method", MCC, MNC, LAC, cellID)
+    print("✔ DEBUG in api method", MCC, MNC, LAC, cellID)
 
     payload = {
         "token": API_TOKEN,
         "radio": "gsm",
-        "mcc": int(MCC),
-        "mnc": int(MNC),
+        "mcc": MCC,
+        "mnc": MNC,
         "cells": [{
-            "lac": int(LAC),
-            "cid": int(cellID)
+            "lac": LAC,
+            "cid": cellID
         }],
         "address": 1
     }
@@ -178,15 +199,13 @@ def handle_status_msg(msg, payload, IMEI):
     speed, Batt, Lock, Temp = float(parts[12]), int(parts[13]), parts[14], float(parts[15])
     RSSI, Cnt, Queued = int(parts[16]), int(parts[17]), int(parts[18])
     isInGeofence, distanceToGeoFence = parts[19], int(parts[20])
-    
 
     RSSI_status = rssi_to_strength(RSSI)
     if gpsSource == "G": gpsSource = "GPS"
     if gpsSource == "B": gpsSource = "BTS"
 
     if gpsSource == "BTS":
-         print("BTS debug - before api: ", gpsSource, lat, lon)
-         lat, lon = get_bts_location_from_openCellID_API(MCC, MNC, LAC, cellID)
+         lat, lon = get_bts_location_from_openCellID_API(parse_bts_value(MCC), parse_bts_value(MNC), parse_bts_value(LAC), parse_bts_value(cellID))
          print("BTS debug - after api: ", lat, lon)
 
     if isInGeofence =="Y": isInGeofence = "in Geo-fence"
