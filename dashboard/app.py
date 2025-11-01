@@ -22,6 +22,10 @@ KEEPALIVE = 600  # seconds, adjust as needed
 USERNAME = "admin"
 PASSWORD = "admin"
 
+# === OpenCellID API ===
+API_URL = "https://opencellid.org/cell/get"
+API_KEY = "pk.cb4111299ee690acb4bdd16fe1f4903f"   # keep this secret
+
 # === Storage ===
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
