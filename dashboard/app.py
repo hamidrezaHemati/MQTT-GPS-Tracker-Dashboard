@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 from datetime import datetime, timedelta
 from collections import deque
 import os, json, csv
+import requests
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = "supersecretkey"  # session management
@@ -23,8 +24,8 @@ USERNAME = "admin"
 PASSWORD = "admin"
 
 # === OpenCellID API ===
-API_URL = "https://opencellid.org/cell/get"
-API_KEY = "pk.cb4111299ee690acb4bdd16fe1f4903f"   # keep this secret
+API_URL = "https://us1.unwiredlabs.com/v2/process"
+API_TOKEN = "pk.cb4111299ee690acb4bdd16fe1f4903f"   # keep this secret
 
 # === Storage ===
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -104,6 +105,60 @@ def get_server_time():
     iran_time = server_time + timedelta(hours=1, minutes=30)      # Add 1 hour 30 minutes
     return iran_time
 
+
+import requests
+
+API_URL = "https://us1.unwiredlabs.com/v2/process.php"
+API_TOKEN = "pk.cb4111299ee690acb4bdd16fe1f4903f"  # <-- your token
+
+def get_bts_location_from_openCellID_API(MCC, MNC, LAC, cellID):
+    """
+    Query OpenCellID (UnwiredLabs) API to get BTS (cell tower) latitude and longitude.
+    Returns (lat, lon) if found, otherwise (None, None).
+    """
+    print("DEBUG in api method", MCC, MNC, LAC, cellID)
+
+    payload = {
+        "token": API_TOKEN,
+        "radio": "gsm",
+        "mcc": int(MCC),
+        "mnc": int(MNC),
+        "cells": [{
+            "lac": int(LAC),
+            "cid": int(cellID)
+        }],
+        "address": 1
+    }
+
+    try:
+        response = requests.post(API_URL, json=payload, timeout=10)
+        print("DEBUG response status code:", response.status_code)
+        print("DEBUG raw response text:", response.text)
+
+        # If the response has no content, print why
+        if not response.text.strip():
+            print("⚠️ Empty response body — possible wrong API URL or token.")
+            return None, None
+
+        data = response.json()
+
+        if data.get("status") == "ok":
+            lat, lon = data.get("lat"), data.get("lon")
+            print("✅ BTS Location:", lat, lon)
+            return lat, lon
+        else:
+            print("⚠️ API returned error:", data)
+            return None, None
+
+    except requests.exceptions.RequestException as e:
+        print("❌ HTTP error:", e)
+        return None, None
+    except ValueError as e:
+        print("❌ JSON decode error:", e)
+        return None, None
+
+    
+
 def handle_status_msg(msg, payload, IMEI):
     print(f"Incomming msg from {IMEI}")
 
@@ -117,7 +172,7 @@ def handle_status_msg(msg, payload, IMEI):
     # ------ GPS Data -------
     lat, lon = float(parts[3]), float(parts[4])
     gpsSource = parts[5]
-    MCC, MNC, LAC, Cell_ID = parts[6], parts[7], parts[8], parts[9]
+    MCC, MNC, LAC, cellID = parts[6], parts[7], parts[8], parts[9]
     spoofingDetection, jammingDetection = parts[10], parts[11]
     # ------- Other Data ---
     speed, Batt, Lock, Temp = float(parts[12]), int(parts[13]), parts[14], float(parts[15])
@@ -128,6 +183,11 @@ def handle_status_msg(msg, payload, IMEI):
     RSSI_status = rssi_to_strength(RSSI)
     if gpsSource == "G": gpsSource = "GPS"
     if gpsSource == "B": gpsSource = "BTS"
+
+    if gpsSource == "BTS":
+         print("BTS debug - before api: ", gpsSource, lat, lon)
+         lat, lon = get_bts_location_from_openCellID_API(MCC, MNC, LAC, cellID)
+         print("BTS debug - after api: ", lat, lon)
 
     if isInGeofence =="Y": isInGeofence = "in Geo-fence"
     if isInGeofence =="N": isInGeofence = "Out of Geo-fence"
@@ -149,7 +209,7 @@ def handle_status_msg(msg, payload, IMEI):
         "topic": msg.topic,
         "HH": HH, "MM": MM, "SS": SS,
         "lat": lat, "lon": lon, "gpsSource": gpsSource,
-        "MCC": MCC, "MNC": MNC, "LAC": LAC, "Cell_ID": Cell_ID,
+        "MCC": MCC, "MNC": MNC, "LAC": LAC, "Cell_ID": cellID,
         "spoofing": spoofingDetection, "jamming": jammingDetection,
         "speed": speed,"Batt": Batt, "Lock Status": Lock,
         "Temperature": Temp, "RSSI": RSSI, "RSSI_status": RSSI_status, "Cnt": Cnt, "isQueued": Queued,
