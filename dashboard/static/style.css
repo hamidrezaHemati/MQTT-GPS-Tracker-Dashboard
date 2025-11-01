@@ -277,14 +277,14 @@ li a:hover:not(.active) {
 
 .alarm-value {
   font-size: 16px;
-  font-weight: bold;
+  /* font-weight: bold; */
   color: #111;
 }
 
 
 .alert-cards {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -311,8 +311,8 @@ li a:hover:not(.active) {
 }
 
 .alert-value {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 14px;
+  /* font-weight: bold; */
   color: #111;
 }
 
@@ -387,20 +387,35 @@ li a:hover:not(.active) {
   margin-right: 10px;
 }
 
+.param-info-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns */
+  grid-auto-rows: auto;
+  gap: 10px 12px; /* spacing between cells */
+}
+
 .param-info {
   display: flex;
   flex-direction: column;
 }
 
+.param-item {
+  font-size: 14px;
+  color: #111;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 .param-label {
-  font-size: 13px;
-  color: #333;
+  font-size: 14px;
+  font-weight: bold;
+  color: #111;
 }
 
 .param-value {
-  font-size: 16px;
-  font-weight: bold;
-  color: #111;
+  font-size: 12px;
+  /* font-weight: bold; */
 }
 
 .bottom-cards {
@@ -410,7 +425,7 @@ li a:hover:not(.active) {
 }
 
 .normal-card {
-  flex: 1 1 60px;
+  flex: 1 1 150px;
   background: #fff;
   padding: 10px;
   border-radius: 12px;
@@ -422,8 +437,8 @@ li a:hover:not(.active) {
 }
 
 .normal-icon {
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   margin-right: 10px;
 }
 

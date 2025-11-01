@@ -89,6 +89,28 @@
           <div class="bottom-cards">
 
             <div class="normal-card">
+              <img src="{{ url_for('static', filename='icons/BTS.png') }}" class="normal-icon">
+              <div class="param-info-2col">
+                <div class="param-item">
+                  <span class="param-label">MCC:</span>
+                  <span id="param-MCC" class="param-value">--</span>
+                </div>
+                <div class="param-item">
+                  <span class="param-label">MNC:</span>
+                  <span id="param-MNC" class="param-value">--</span>
+                </div>
+                <div class="param-item">
+                  <span class="param-label">LAC:</span>
+                  <span id="param-LAC" class="param-value">--</span>
+                </div>
+                <div class="param-item">
+                  <span class="param-label">Cell ID:</span>
+                  <span id="param-Cell_ID" class="param-value">--</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="normal-card">
               <img src="{{ url_for('static', filename='icons/satellite.png') }}" class="normal-icon">
               <div class="param-info">
                 <!-- <span class="param-label">Signal Source:</span> -->
